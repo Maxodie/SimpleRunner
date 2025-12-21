@@ -1,0 +1,5 @@
+build/
+bin/
+.clang
+.cache
+imgui.ini
