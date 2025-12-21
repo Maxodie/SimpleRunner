@@ -1,0 +1,194 @@
+[
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\imgui.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\imgui.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/imgui.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/imgui.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_demo.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_demo.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/imgui_demo.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/imgui_demo.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_draw.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_draw.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/imgui_draw.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/imgui_draw.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_tables.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_tables.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/imgui_tables.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/imgui_tables.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_widgets.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\imgui_widgets.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/imgui_widgets.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/imgui_widgets.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\backends\\imgui_impl_glfw.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\backends\\imgui_impl_glfw.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/backends/imgui_impl_glfw.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/backends/imgui_impl_glfw.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\backends\\imgui_impl_opengl3.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\backends\\imgui_impl_opengl3.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/backends/imgui_impl_opengl3.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/backends/imgui_impl_opengl3.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -Dimgui_EXPORTS @CMakeFiles/imgui.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\imgui.dir\\SimpleRunner\\vendors\\imgui\\imgui\\misc\\cpp\\imgui_stdlib.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\imgui\\imgui\\misc\\cpp\\imgui_stdlib.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/imgui/imgui/misc/cpp/imgui_stdlib.cpp",
+  "output": "CMakeFiles/imgui.dir/SimpleRunner/vendors/imgui/imgui/misc/cpp/imgui_stdlib.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -DStbImplementation_EXPORTS @CMakeFiles/StbImplementation.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\StbImplementation.dir\\SimpleRunner\\vendors\\stb\\StbImplementation.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\stb\\StbImplementation.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/stb/StbImplementation.cpp",
+  "output": "CMakeFiles/StbImplementation.dir/SimpleRunner/vendors/stb/StbImplementation.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -DSR_ASSERT -DSR_EDITOR -DSR_LOGGER @CMakeFiles/SimpleRunner.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\SimpleRunner.dir\\SimpleRunner\\src\\Core\\Application.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\src\\Core\\Application.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/src/Core/Application.cpp",
+  "output": "CMakeFiles/SimpleRunner.dir/SimpleRunner/src/Core/Application.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang++.exe -DSR_ASSERT -DSR_EDITOR -DSR_LOGGER @CMakeFiles/SimpleRunnerEditor.dir/includes_CXX.rsp -g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral -O0 -std=c++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\SimpleRunnerEditor.dir\\SimpleRunnerEditor\\src\\Editor.cpp.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunnerEditor\\src\\Editor.cpp",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunnerEditor/src/Editor.cpp",
+  "output": "CMakeFiles/SimpleRunnerEditor.dir/SimpleRunnerEditor/src/Editor.cpp.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\context.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\context.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/context.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/context.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\init.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\init.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/init.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/init.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\input.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\input.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/input.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/input.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\monitor.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\monitor.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/monitor.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/monitor.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\platform.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\platform.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/platform.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/platform.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\vulkan.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\vulkan.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/vulkan.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/vulkan.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\window.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\window.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/window.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/window.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\egl_context.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\egl_context.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/egl_context.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/egl_context.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\osmesa_context.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\osmesa_context.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/osmesa_context.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/osmesa_context.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\null_init.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\null_init.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/null_init.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/null_init.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\null_monitor.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\null_monitor.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/null_monitor.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/null_monitor.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\null_window.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\null_window.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/null_window.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/null_window.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\null_joystick.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\null_joystick.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/null_joystick.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/null_joystick.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\win32_module.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\win32_module.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/win32_module.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/win32_module.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\win32_time.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\win32_time.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/win32_time.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/win32_time.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\win32_thread.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\win32_thread.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/win32_thread.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/win32_thread.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\win32_init.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\win32_init.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/win32_init.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/win32_init.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\win32_joystick.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\win32_joystick.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/win32_joystick.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/win32_joystick.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\win32_monitor.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\win32_monitor.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/win32_monitor.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/win32_monitor.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\win32_window.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\win32_window.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/win32_window.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/win32_window.c.obj"
+},
+{
+  "directory": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/build/SimpleRunner/vendors/GLFW/glfw/src",
+  "command": "C:\\LLVM_clang\\clang+llvm-19.1.5-x86_64\\bin\\clang.exe -DUNICODE -D_CRT_SECURE_NO_WARNINGS -D_GLFW_WIN32 -D_UNICODE @CMakeFiles/glfw.dir/includes_C.rsp -O0 -std=c99 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -Wall -o CMakeFiles\\glfw.dir\\wgl_context.c.obj -c E:\\_prog\\C++\\Engine\\SimpleRunner\\SimpleRunner\\SimpleRunner\\vendors\\GLFW\\glfw\\src\\wgl_context.c",
+  "file": "E:/_prog/C++/Engine/SimpleRunner/SimpleRunner/SimpleRunner/vendors/GLFW/glfw/src/wgl_context.c",
+  "output": "SimpleRunner/vendors/GLFW/glfw/src/CMakeFiles/glfw.dir/wgl_context.c.obj"
+}
+]

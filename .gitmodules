@@ -1,0 +1,12 @@
+[submodule "SimpleRunner/vendors/GLFW/glfw"]
+	path = SimpleRunner/vendors/GLFW/glfw
+	url = https://github.com/glfw/glfw
+[submodule "SimpleRunner/vendors/glm/glm"]
+	path = SimpleRunner/vendors/glm/glm
+	url = https://github.com/g-truc/glm
+[submodule "SimpleRunner/vendors/imgui/imgui"]
+	path = SimpleRunner/vendors/imgui/imgui
+	url = https://github.com/ocornut/imgui/
+[submodule "SimpleRunner/vendors/stb/stb"]
+	path = SimpleRunner/vendors/stb/stb
+	url = https://github.com/nothings/stb
