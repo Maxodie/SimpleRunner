@@ -1,2 +1,0 @@
-C:\LLVM_clang\clang+llvm-19.1.5-x86_64\bin\llvm-ar.exe qc E:\_prog\C++\Engine\SimpleRunner\SimpleRunner\bin\Windows\SimpleRunner\SimpleRunner.lib CMakeFiles/SimpleRunner.dir/SimpleRunner/src/Core/Application.cpp.obj
-C:\LLVM_clang\clang+llvm-19.1.5-x86_64\bin\llvm-ranlib.exe E:\_prog\C++\Engine\SimpleRunner\SimpleRunner\bin\Windows\SimpleRunner\SimpleRunner.lib
