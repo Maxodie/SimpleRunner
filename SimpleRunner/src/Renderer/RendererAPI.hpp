@@ -1,0 +1,67 @@
+#pragma once
+#include "Core/Core.hpp"
+#include "nvrhi/vulkan.h"
+
+namespace SR
+{
+
+class RendererMessageCallback : public nvrhi::IMessageCallback
+{
+    virtual void message(nvrhi::MessageSeverity severity, const char* messageText) override;
+};
+
+
+class RendererAPI
+{
+public:
+    struct Context
+    {
+        nvrhi::DeviceHandle DeviceHandle;
+
+        RendererMessageCallback ErrorCallback;
+        VkPhysicalDevice PhysicalDevice = VK_NULL_HANDLE;
+        VkInstance Instance = VK_NULL_HANDLE;
+        VkPhysicalDeviceFeatures PhysicalDeviceFeature;
+        VkPhysicalDeviceProperties PhysicalDeviceProperties;
+        VkPhysicalDeviceMemoryProperties PhysicalDeviceMemoryProperties;
+        VkSurfaceKHR Surface = VK_NULL_HANDLE;
+        std::vector<const char*> ValidationLayers;
+
+        bool SupportsDeviceLocalHostVisible;
+        bool EnableValidationLayers = true;
+        uint32_t GraphicsFamily;
+        uint32_t PresentFamily;
+
+        VkDevice Device = VK_NULL_HANDLE;
+        VkQueue GraphicsQueue = VK_NULL_HANDLE;
+        VkQueue PresentQueue = VK_NULL_HANDLE;
+        int GraphicsQueueIndex = 0;
+    };
+
+    static void Init();
+    static void Shutdown();
+
+    static const Context& GetContext() { return s_context; }
+
+private:
+    static void VulkanInitValidationLayer();
+    static bool VulkanCheckValidationLayerSupport();
+
+    static void LoadQueueFamilies(VkPhysicalDevice device);
+    static bool TryLoadingPhysicalDevice(VkPhysicalDevice device);
+    static VkPhysicalDevice FindPhysicalDevice();
+    static VkDevice CreateDevice();
+
+    static void VulkanPopulateDebugMessenger(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+    static void CreateInstance();
+
+    static void GLFWSetExtension(VkInstanceCreateInfo* createInfo, std::vector<const char*>& extensionList);
+
+    static VkQueue CreateQueue(int& outIndex);
+
+
+private:
+    static Context s_context;
+};
+
+}

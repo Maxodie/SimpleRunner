@@ -10,3 +10,6 @@
 [submodule "SimpleRunner/vendors/stb/stb"]
 	path = SimpleRunner/vendors/stb/stb
 	url = https://github.com/nothings/stb
+[submodule "SimpleRunner/vendors/NVRHI/NVRHI"]
+	path = SimpleRunner/vendors/NVRHI/NVRHI
+	url = https://github.com/NVIDIA-RTX/NVRHI

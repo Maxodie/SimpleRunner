@@ -1,16 +1,37 @@
 add_library(SimpleRunner
     SimpleRunner/src/SimpleRunner.hpp
+    SimpleRunner/src/EntryPoint.hpp
+    SimpleRunner/src/EntryPoint.cpp
 
         SimpleRunner/src/Core/Core.hpp
         SimpleRunner/src/Core/Application.hpp
         SimpleRunner/src/Core/Application.cpp
+
+        SimpleRunner/src/Event/Event.hpp
+
+        SimpleRunner/src/LayerStack/LayerStack.hpp
+        SimpleRunner/src/LayerStack/LayerStack.cpp
+
+        SimpleRunner/src/Window/Window.hpp
+        SimpleRunner/src/Window/Window.cpp
+        SimpleRunner/src/Window/GraphicsContext.hpp
+        SimpleRunner/src/Window/GraphicsContext.cpp
+
+        SimpleRunner/src/Log/Log.hpp
+        SimpleRunner/src/Log/Log.cpp
+
+        SimpleRunner/src/Renderer/RendererAPI.hpp
+        SimpleRunner/src/Renderer/RendererAPI.cpp
 )
 
-target_link_libraries(SimpleRunner PRIVATE
+target_link_libraries(SimpleRunner PUBLIC
     glfw
     glm_math
     imgui
     StbImplementation
+    Vulkan::Vulkan
+    nvrhi
+    nvrhi_vk
 )
 
 target_include_directories(SimpleRunner PRIVATE
