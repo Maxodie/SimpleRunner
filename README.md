@@ -9,7 +9,7 @@ project submodules :
 - ImGui
 
 project package dependencies :
-- Vulkan (>= 1.4)
+- VulkanSDK (>= 1.4)
 
 ## Build
 cmake build options : `GIT_SUBMODULE` `CMAKE_EXPORT_COMPILE_COMMANDS` `COMPILE_CONFIG_BUILD`
