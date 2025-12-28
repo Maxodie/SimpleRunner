@@ -1,11 +1,16 @@
 #pragma once
 #include "Core/Core.hpp"
+#include "Event/Event.hpp"
 
 namespace SR
 {
 
 class Layer
 {
+public:
+    virtual ~Layer();
+    virtual void OnEvent(Event& event) = 0;
+
     TypeID id;
 };
 
@@ -41,6 +46,11 @@ public:
                 }
             )
         );
+    }
+
+    SR_INLINE const std::vector<std::unique_ptr<Layer>>& GetStack()
+    {
+        return m_layers;
     }
 
 private:

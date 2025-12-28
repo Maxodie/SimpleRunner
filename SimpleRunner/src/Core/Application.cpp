@@ -8,10 +8,22 @@
 
 namespace SR
 {
+
+Application* Application::s_instance;
+
 void Application::Init()
 {
+    if(s_instance)
+    {
+        CORE_ASSERT(false, "Trying to create a second app. Only one app must exists");
+        return;
+    }
+
+    s_instance = this;
+
     GraphicsContext::Init();
 
+    //creation of the main window must occure before the renderer initialization
     m_window = std::make_unique<Window>((Window::Data)
         {.Width=1280, .Height=720, .Name="Game", .callback=BIND_FUNCTION_1(Application::OnEvent)}
     );
@@ -44,6 +56,14 @@ void Application::OnEvent(Event& event)
 {
     EventDispatcher dispatcher{event};
     dispatcher.Dispatch<WindowClosedEvent>(BIND_FUNCTION_1(Application::OnWindowClosedEvent));
+
+    for(auto& layer : m_layerStack.GetStack())
+    {
+        if(!event.Handled)
+        {
+            layer->OnEvent(event);
+        }
+    }
 }
 
 bool Application::OnWindowClosedEvent(const WindowClosedEvent& window)

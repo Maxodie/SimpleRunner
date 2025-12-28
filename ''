@@ -1,0 +1,32 @@
+#pragma once
+#include "Renderer/VulkanStructures.hpp"
+
+namespace SR
+{
+
+class Swapchain
+{
+public:
+    void Init(RendererContext& context);
+    void Shutdown();
+
+    void InitSwapChainSupportData(RendererContext& context);
+    void ShutdownSwapChainSupportData();
+
+    SR_INLINE void Recreate(RendererContext& handle)
+    {
+        Destroy();
+        Create(handle);
+    }
+
+private:
+    void Create(RendererContext& context);
+    void Destroy();
+
+    void ImagesQuery(RendererContext& context);
+    bool VulkanSwapChainSupportByQuery(RendererContext& context);
+
+    SwapchainData m_data;
+};
+
+}

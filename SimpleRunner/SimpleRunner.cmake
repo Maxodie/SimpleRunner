@@ -20,8 +20,14 @@ add_library(SimpleRunner
         SimpleRunner/src/Log/Log.hpp
         SimpleRunner/src/Log/Log.cpp
 
+        SimpleRunner/src/Renderer/VulkanInclude.hpp
+        SimpleRunner/src/Renderer/VulkanStructures.hpp
         SimpleRunner/src/Renderer/RendererAPI.hpp
         SimpleRunner/src/Renderer/RendererAPI.cpp
+        SimpleRunner/src/Renderer/Swapchain.hpp
+        SimpleRunner/src/Renderer/Swapchain.cpp
+        SimpleRunner/src/Renderer/GraphicsPipeline.hpp
+        SimpleRunner/src/Renderer/GraphicsPipeline.cpp
 )
 
 target_link_libraries(SimpleRunner PUBLIC

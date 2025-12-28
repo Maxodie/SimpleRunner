@@ -23,12 +23,17 @@ public:
 
     void PollEvent();
 
+    SR_INLINE void* GetNative()
+    {
+        return m_native;
+    }
+
 private:
     void Create();
     void Destroy();
 
 private:
-    GLFWwindow* m_native;
+    void* m_native;
     Data m_data;
 };
 

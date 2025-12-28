@@ -1,10 +1,13 @@
 #include "Renderer/RendererAPI.hpp"
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include <vulkan/vulkan.hpp>
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
+#include "Core/Application.hpp"
+#include "Core/Core.hpp"
+#include "Log/Log.hpp"
 
-#include "nvrhi/nvrhi.h"
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
+#include "nvrhi/vulkan.h"
 #include "nvrhi/validation.h"
+
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <vulkan/vulkan_core.h>
@@ -12,7 +15,8 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 namespace SR
 {
 
-RendererAPI::Context RendererAPI::s_context;
+RendererContext RendererAPI::s_context;
+Swapchain RendererAPI::s_swapchain;
 
 void RendererAPI::VulkanInitValidationLayer()
 {
@@ -98,6 +102,15 @@ void RendererMessageCallback::message(nvrhi::MessageSeverity severity, const cha
 
 void RendererAPI::Init()
 {
+    if(!glfwVulkanSupported())
+    {
+        CORE_LOG_ERROR("GLFW reports that vulkan is not supported");
+        return;
+    }
+
+    const uint32_t minimumVulkanVersion = VK_MAKE_API_VERSION(0, 1, 4, 0);
+
+
     const char* deviceExtensions[] =
     {
         "VK_KHR_acceleration_structure",
@@ -108,15 +121,28 @@ void RendererAPI::Init()
 
     VulkanInitValidationLayer();
     CreateInstance();
+
+    // Check if the Vulkan API version is sufficient.
+    const auto& version = vk::enumerateInstanceVersion();
+    if (version < minimumVulkanVersion)
+    {
+        CORE_LOG_ERROR("The Vulkan API version supported on the system (%d.%d.%d) is too low, at least %d.%d.%d is required.",
+                       VK_API_VERSION_MAJOR(version), VK_API_VERSION_MINOR(version), VK_API_VERSION_PATCH(version),
+                       VK_API_VERSION_MAJOR(minimumVulkanVersion), VK_API_VERSION_MINOR(minimumVulkanVersion), VK_API_VERSION_PATCH(minimumVulkanVersion));
+        return;
+    }
+
+    GLFWCreateSurface();
     s_context.PhysicalDevice = FindPhysicalDevice();
     s_context.Device = CreateDevice();
-    s_context.GraphicsQueue = CreateQueue(s_context.GraphicsQueueIndex);
 
     nvrhi::vulkan::DeviceDesc deviceDesc;
     deviceDesc.errorCB = &s_context.ErrorCallback;
     deviceDesc.physicalDevice = s_context.PhysicalDevice;
     deviceDesc.device = s_context.Device;
     deviceDesc.graphicsQueue = s_context.GraphicsQueue;
+    deviceDesc.computeQueue = nullptr;
+    deviceDesc.transferQueue = nullptr;
     deviceDesc.graphicsQueueIndex = s_context.GraphicsQueueIndex;
     deviceDesc.deviceExtensions = deviceExtensions;
     deviceDesc.numDeviceExtensions = std::size(deviceExtensions);
@@ -128,30 +154,46 @@ void RendererAPI::Init()
         s_context.DeviceHandle = nvrhiValidationLayer;
     }
 
+    s_swapchain.Init(s_context);
+    CreateFrameBuffer();
+
     CORE_LOG_SUCCESS("NVRHI vulkan initialized");
 }
 
 void RendererAPI::Shutdown()
 {
-    vkDestroyDevice(s_context.Device, NULL);
-    vkDestroyInstance(s_context.Instance, NULL);
+    DestroyFrameBuffer();
+    s_swapchain.Shutdown(s_context);
+
+    s_context.DeviceHandle = nullptr;
+
+    DestroyDevice();
+    GLFWDestroySurface();
+    DestroyInstance();
+
+
+    s_context.PhysicalDevice = VK_NULL_HANDLE;
+    RendererMessageCallback ErrorCallback;
+    s_context.Instance = VK_NULL_HANDLE;
+    s_context.Surface = VK_NULL_HANDLE;
+
+    s_context.Device = VK_NULL_HANDLE;
+    s_context.GraphicsQueue = VK_NULL_HANDLE;
+    s_context.PresentQueue = VK_NULL_HANDLE;
+
+    CORE_LOG_SUCCESS("RendererAPI has been shutdown");
 }
 
-VkPhysicalDevice RendererAPI::FindPhysicalDevice()
+vk::PhysicalDevice RendererAPI::FindPhysicalDevice()
 {
 	//List all physical devices
-	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(s_context.Instance, &deviceCount, NULL);
-
-	CORE_ASSERT(deviceCount > 0, "Failed to find GPUs with Vulkan support!");
-
-    std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(s_context.Instance, &deviceCount, devices.data());
+    auto physicalDevices = s_context.Instance.enumeratePhysicalDevices();
+	CORE_ASSERT(physicalDevices.size() > 0, "Failed to find GPUs with Vulkan support!");
 
 	/*------------------ Search for physical device ------------------*/
-	for (uint32_t i = 0; i < deviceCount; i++)
+	for (uint32_t i = 0; i < physicalDevices.size(); i++)
 	{
-		if (TryLoadingPhysicalDevice(devices[i]))
+		if (TryLoadingPhysicalDevice(physicalDevices[i]))
         {
 			break;
 		}
@@ -159,10 +201,9 @@ VkPhysicalDevice RendererAPI::FindPhysicalDevice()
 
 	/*------------------ Show Total Search Results ------------------*/
 	CORE_LOG_SUCCESS("   == Vulkan GPU available ==");
-	for (size_t i = 0; i < deviceCount; i++)
+	for (size_t i = 0; i < physicalDevices.size(); i++)
 	{
-		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties(devices[i], &properties);
+        vk::PhysicalDeviceProperties properties = physicalDevices[i].getProperties();
 		CORE_LOG_SUCCESS("   - NAME   %s", properties.deviceName);
 	}
 
@@ -176,15 +217,12 @@ VkPhysicalDevice RendererAPI::FindPhysicalDevice()
     return s_context.PhysicalDevice;
 }
 
-bool RendererAPI::TryLoadingPhysicalDevice(VkPhysicalDevice device)
+bool RendererAPI::TryLoadingPhysicalDevice(vk::PhysicalDevice device)
 {
 	/*--------------------- Check For Physical Device Support ---------------------*/
-	VkPhysicalDeviceProperties deviceProperties;
-	vkGetPhysicalDeviceProperties(device, &deviceProperties);
-	VkPhysicalDeviceFeatures deviceFeatures;
-	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(device, &deviceMemoryProperties);
+    vk::PhysicalDeviceProperties deviceProperties = device.getProperties();
+	vk::PhysicalDeviceFeatures deviceFeatures = device.getFeatures();
+	vk::PhysicalDeviceMemoryProperties deviceMemoryProperties = device.getMemoryProperties();
 
 	//base reuirement
 	if (!deviceFeatures.samplerAnisotropy)
@@ -197,8 +235,8 @@ bool RendererAPI::TryLoadingPhysicalDevice(VkPhysicalDevice device)
 	// check if device support local/host visible
 	for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++)
 	{
-		if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0 &&
-			(deviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) != 0)
+		if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlags::BitsType::eHostVisible) &&
+			(deviceMemoryProperties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlags::BitsType::eDeviceLocal))
 		{
 			supportsDeviceLocalHostVisible = true;
 			break;
@@ -217,7 +255,6 @@ bool RendererAPI::TryLoadingPhysicalDevice(VkPhysicalDevice device)
 	s_context.PhysicalDeviceMemoryProperties = deviceMemoryProperties;
 	s_context.SupportsDeviceLocalHostVisible = supportsDeviceLocalHostVisible;
 
-
 	/*--------------------- Check For Queues Family ---------------------*/
 	LoadQueueFamilies(device);
 	//Bool extensionsSupported = VulkanSelectLogicalDevice(vkInfo, device);
@@ -227,100 +264,91 @@ bool RendererAPI::TryLoadingPhysicalDevice(VkPhysicalDevice device)
 	//swapChainAdequate = !(swapChainSupport.formats.impl.count == 0) && !(swapChainSupport.presentModes.impl.count == 0);
 	//VulkanClearSwapChainSupport(&swapChainSupport);
 
-	return s_context.GraphicsFamily && s_context.PresentFamily;//&& /*extensionsSupported && */ swapChainAdequate;
+	return s_context.GraphicsFamily.has_value() && s_context.PresentFamily.has_value();//&& /*extensionsSupported && */ swapChainAdequate;
 }
 
-void RendererAPI::LoadQueueFamilies(VkPhysicalDevice device)
+void RendererAPI::LoadQueueFamilies(vk::PhysicalDevice device)
 {
-	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, NULL);
+    const auto& queueFamilies = device.getQueueFamilyProperties();
 
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-	VkBool32 presentSupport = VK_FALSE;
-	for (uint32_t i = 0; i < queueFamilyCount; i++)
+    uint32_t graphicsFamily = 0;
+    uint32_t presentFamily = 0;
+	for (uint32_t i = 0; i < queueFamilies.size(); i++)
 	{
-		if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        bool graphicsBitSupport = static_cast<uint32_t>(queueFamilies[i].queueFlags & vk::QueueFlags::BitsType::eGraphics);
+		if (graphicsBitSupport)
 		{
-			s_context.GraphicsFamily = i;
+			graphicsFamily = i;
+            CORE_LOG_DEBUG("device: %s, graphics supported id: %zu", device.getProperties().deviceName.data(), i);
 		}
 
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, s_context.Surface, &presentSupport);
+        bool presentSupport = device.getSurfaceSupportKHR(i, s_context.Surface);
 
 		if (presentSupport)
         {
-			s_context.PresentFamily = i;
+			presentFamily = i;
+            CORE_LOG_DEBUG("device: %s, present supported id: %zu", device.getProperties().deviceName.data(), i);
 		}
 
-		if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT && presentSupport)
+		if (graphicsBitSupport && presentSupport)
 		{
+            s_context.GraphicsFamily = i;
+            s_context.PresentFamily = i;
 			break;
 		}
 	}
 }
 
-VkDevice RendererAPI::CreateDevice()
+vk::Device RendererAPI::CreateDevice()
 {
     /*--------------------- Check For Device Extension Support ---------------------*/
 
-	uint32_t extensionCount = 0;
-	vkEnumerateDeviceExtensionProperties(s_context.PhysicalDevice, NULL, &extensionCount, NULL);
+	// uint32_t extensionCount = 0;
+	// vkEnumerateDeviceExtensionProperties(s_context.PhysicalDevice, NULL, &extensionCount, NULL);
+    auto extensions = s_context.PhysicalDevice.enumerateDeviceExtensionProperties();
 
     std::vector<const char*> requiredDeviceExtensionsNames = { "VK_KHR_swapchain" };
-    requiredDeviceExtensionsNames.reserve(6);
-	if (extensionCount > 0)
-	{
-        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(s_context.PhysicalDevice, NULL, &extensionCount, &availableExtensions[0]);
 
-		for (uint32_t i = 0; i < extensionCount; i++)
-		{
-			if (strcmp(availableExtensions[i].extensionName, "VK_KHR_portability_subset") == 0)
-			{
-				CORE_LOG_DEBUG("Adding required device extension 'VK_KHR_portability_subset'");
-				requiredDeviceExtensionsNames.emplace_back("VK_KHR_portability_subset");
-			}
-		}
-	}
+    for(const auto& extension : extensions)
+    {
+        if (strcmp(extension.extensionName, "VK_KHR_portability_subset") == 0)
+        {
+            CORE_LOG_DEBUG("Adding required device extension 'VK_KHR_portability_subset'");
+            requiredDeviceExtensionsNames.emplace_back("VK_KHR_portability_subset");
+        }
+    }
 
 	/*--------------------- Device Feature and Dynamic rendering features ---------------------*/
-	VkPhysicalDeviceFeatures2 deviceFeature = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR,
-        .features = (VkPhysicalDeviceFeatures){
-            .fillModeNonSolid = s_context.PhysicalDeviceFeature.fillModeNonSolid,
-            .samplerAnisotropy = s_context.PhysicalDeviceFeature.samplerAnisotropy,
-            .shaderClipDistance = s_context.PhysicalDeviceFeature.shaderClipDistance,
-        }
-	};
+    vk::PhysicalDeviceFeatures2 deviceFeature{};
+    deviceFeature.features = (VkPhysicalDeviceFeatures){
+        .fillModeNonSolid = s_context.PhysicalDeviceFeature.fillModeNonSolid,
+        .samplerAnisotropy = s_context.PhysicalDeviceFeature.samplerAnisotropy,
+        .shaderClipDistance = s_context.PhysicalDeviceFeature.shaderClipDistance,
+    };
 
 	if (!deviceFeature.features.shaderClipDistance)
 	{
 		CORE_LOG_ERROR("ShaderClipDistance not supported by vulkan device '%s'", s_context.PhysicalDeviceProperties.deviceName);
 	}
 
-	VkPhysicalDeviceBufferDeviceAddressFeatures deviceFeatureBufferAddress = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
-		.bufferDeviceAddress = VK_TRUE,
-	};
+    vk::PhysicalDeviceBufferDeviceAddressFeatures deviceFeatureBufferAddress{};
+    deviceFeatureBufferAddress.bufferDeviceAddress = true;
 
-	VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
-        .pNext = &deviceFeatureBufferAddress,
-		.dynamicRendering = VK_TRUE,
-	};
+    vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures{};
+    dynamicRenderingFeatures.pNext = &deviceFeatureBufferAddress;
+    dynamicRenderingFeatures.dynamicRendering = true;
 
 	deviceFeature.pNext = &dynamicRenderingFeatures;
 
-	requiredDeviceExtensionsNames.emplace_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+	// requiredDeviceExtensionsNames.emplace_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 
 	/*--------------------- Find Queue Families ---------------------*/
 
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 
 	std::vector<uint32_t> uniqueQueueFamilies = {
-        s_context.GraphicsFamily,
-        s_context.PresentFamily
+        s_context.GraphicsFamily.value(),
+        s_context.PresentFamily.value()
     };
 
     uniqueQueueFamilies.erase(unique(uniqueQueueFamilies.begin(), uniqueQueueFamilies.end()));
@@ -336,67 +364,73 @@ VkDevice RendererAPI::CreateDevice()
 
 	for (uint32_t i = 0; i < uniqueQueueFamilies.size(); i++)
 	{
-		VkDeviceQueueCreateInfo queueCreateInfo =
-        {
-			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .pNext = VK_NULL_HANDLE,
-            .flags = 0,
-			.queueFamilyIndex = uniqueQueueFamilies[i],
-			.queueCount = 1,
-			.pQueuePriorities = &queuePriority,
-		};
+        vk::DeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.pNext = VK_NULL_HANDLE;
+        queueCreateInfo.flags = static_cast<vk::DeviceQueueCreateFlags>(0);
+        queueCreateInfo.queueFamilyIndex = uniqueQueueFamilies[i];
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
 	/*--------------------- Fill Create infos ---------------------*/
-	VkDeviceCreateInfo deviceCreateInfo = {
-		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &deviceFeature,
-        .queueCreateInfoCount = (uint32_t)queueCreateInfos.size(),
-        .pQueueCreateInfos = queueCreateInfos.data(),
-		.enabledExtensionCount = (uint32_t)requiredDeviceExtensionsNames.size(),
-		.ppEnabledExtensionNames = requiredDeviceExtensionsNames.data(),
-	};
+    vk::DeviceCreateInfo deviceCreateInfo{};
+    deviceCreateInfo.pNext = &deviceFeature;
+    deviceCreateInfo.queueCreateInfoCount = (uint32_t)queueCreateInfos.size();
+    deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+    deviceCreateInfo.enabledExtensionCount = (uint32_t)requiredDeviceExtensionsNames.size();
+    deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensionsNames.data();
 
-	if (s_context.EnableValidationLayers)
-	{
-		deviceCreateInfo.enabledLayerCount = (uint32_t)s_context.ValidationLayers.size();
-		deviceCreateInfo.ppEnabledLayerNames = &s_context.ValidationLayers[0];
-	}
-	else
-	{
-		deviceCreateInfo.enabledLayerCount = 0;
-	}
+	//    vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo{ };
+	// if (s_context.EnableValidationLayers)
+	// {
+	// 	deviceCreateInfo.enabledLayerCount = (uint32_t)s_context.ValidationLayers.size();
+	// 	deviceCreateInfo.ppEnabledLayerNames = s_context.ValidationLayers.data();
+	//        VulkanPopulateDebugMessenger(debugCreateInfo);
+	//        deviceCreateInfo.pNext = &debugCreateInfo;
+	// }
+	// else
+	// {
+	// 	deviceCreateInfo.enabledLayerCount = 0;
+	// }
 
 	//create device based on pyshical device and deviceCreateInfo
-	VkResult result = vkCreateDevice(s_context.PhysicalDevice, &deviceCreateInfo, NULL, &s_context.Device);
-	CORE_ASSERT(result == VK_SUCCESS, "failed to create logical device!");
+    vk::Result result = s_context.PhysicalDevice.createDevice(&deviceCreateInfo, nullptr, &s_context.Device);
+	CORE_ASSERT(result == vk::Result::eSuccess, "failed to create logical device!");
 
 	/*--------------------- Store Queues ---------------------*/
-	vkGetDeviceQueue(s_context.Device, s_context.GraphicsFamily, 0, &s_context.GraphicsQueue);
-	vkGetDeviceQueue(s_context.Device, s_context.PresentFamily, 0, &s_context.PresentQueue);
+    s_context.Device.getQueue(s_context.GraphicsFamily.value(), 0, &s_context.GraphicsQueue);
+    s_context.Device.getQueue(s_context.PresentFamily.value(), 0, &s_context.PresentQueue);
 
 	CORE_LOG_SUCCESS("Vulkan logical device created");
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(s_context.Device);
 
     return s_context.Device;
 }
 
+void RendererAPI::DestroyDevice()
+{
+    s_context.Device.destroy();
+    CORE_LOG_SUCCESS("renderer device destroyed");
+}
+
 static void VulkanShowDebug(
-	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData)
+	vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData)
 {
 	switch (messageSeverity)
 	{
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eError:
 		CORE_LOG_ERROR("Vulkan Validation layer: %s", pCallbackData->pMessage);
 		return;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eWarning:
 		CORE_LOG_WARNING("Vulkan Validation layer: %s", pCallbackData->pMessage);
 		return;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eInfo:
 		CORE_LOG_DEBUG("Vulkan Validation layer: %s", pCallbackData->pMessage);
 		return;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eVerbose:
 		CORE_LOG_DEBUG("Vulkan Validation layer: %s", pCallbackData->pMessage);
 		return;
 	default:
@@ -406,12 +440,12 @@ static void VulkanShowDebug(
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(
-	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT messageType,
-	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	vk::DebugUtilsMessageTypeFlagsEXT messageType,
+	const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
-	if (RendererAPI::GetContext().EnableValidationLayers || messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	if (RendererAPI::GetContext().EnableValidationLayers || messageSeverity >= vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eWarning)
 	{
 		VulkanShowDebug(messageSeverity, pCallbackData);
 	}
@@ -419,26 +453,24 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(
 	return VK_FALSE;
 }
 
-void RendererAPI::VulkanPopulateDebugMessenger(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+void RendererAPI::VulkanPopulateDebugMessenger(vk::DebugUtilsMessengerCreateInfoEXT& createInfo)
 {
-	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eInfo |
+                                 vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eVerbose |
+                                 vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eWarning |
+                                 vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eError;
 
-	createInfo.messageSeverity =	VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-									VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-									VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-									VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-
-	createInfo.messageType =	VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-								VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-								VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
-								VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT;
+    createInfo.messageType = vk::DebugUtilsMessageTypeFlagsEXT::BitsType::eGeneral |
+                             vk::DebugUtilsMessageTypeFlagsEXT::BitsType::eValidation |
+                             vk::DebugUtilsMessageTypeFlagsEXT::BitsType::ePerformance;
 
 	createInfo.pfnUserCallback = VulkanDebugCallback;
-	createInfo.pUserData = VK_NULL_HANDLE;
+	createInfo.pUserData = nullptr;
 }
 
 void RendererAPI::CreateInstance()
 {
+    VULKAN_HPP_DEFAULT_DISPATCHER.init();
 	//Init validation layers
 	if (s_context.EnableValidationLayers && !VulkanCheckValidationLayerSupport())
 	{
@@ -448,40 +480,34 @@ void RendererAPI::CreateInstance()
 	}
 
 	//Create instance data
-	VkApplicationInfo appInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-		.pApplicationName = "Vulkan Simple Runner",
-		.applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-		.pEngineName = "Simple Runner Engine",
-		.engineVersion = VK_MAKE_VERSION(1, 0, 0),
-		.apiVersion = VK_API_VERSION_1_3
-	};
+    vk::ApplicationInfo appInfo = vk::ApplicationInfo()
+        .setApiVersion(VK_API_VERSION_1_4)
+        .setApplicationVersion(VK_MAKE_VERSION(1, 4, 0))
+        .setEngineVersion(VK_MAKE_VERSION(1, 4, 0))
+        .setPApplicationName("Vulkan Simple Runner")
+        .setPEngineName("Simple Runner Engine");
 
-	VkInstanceCreateInfo createInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-		.pApplicationInfo = &appInfo,
-#ifdef FE_PLATFORM_MACOS
-		.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+    vk::InstanceCreateInfo createInfo = vk::InstanceCreateInfo()
+        .setPApplicationInfo(&appInfo);
+#ifdef SR_PLATFORM_MACOS
+    createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
-	};
 
 	//setup validation layers/window extensions into the instance data
-	// VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-	// if (s_context.EnableValidationLayers)
-	// {
-	// 	createInfo.enabledLayerCount = static_cast<uint32_t>(s_context.ValidationLayers.size());
-	// 	createInfo.ppEnabledLayerNames = s_context.ValidationLayers.data();
-	// 	VulkanPopulateDebugMessenger(debugCreateInfo);
-	// 	createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
-	// }
-	// else
-	// {
-	// 	createInfo.enabledLayerCount = 0;
-	// 	createInfo.ppEnabledLayerNames = NULL;
-	// 	createInfo.pNext = VK_NULL_HANDLE;
-	// }
+    vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo{ };
+	if (s_context.EnableValidationLayers)
+	{
+		createInfo.enabledLayerCount = (uint32_t)s_context.ValidationLayers.size();
+		createInfo.ppEnabledLayerNames = s_context.ValidationLayers.data();
+        VulkanPopulateDebugMessenger(debugCreateInfo);
+        createInfo.pNext = &debugCreateInfo;
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+		createInfo.ppEnabledLayerNames = nullptr;
+        createInfo.pNext = nullptr;
+	}
 
 	//window extension
     std::vector<const char*> createInfoExtensions;
@@ -497,39 +523,62 @@ void RendererAPI::CreateInstance()
 
     GLFWSetExtension(&createInfo, createInfoExtensions);
 
-	//Get vulkan extensions
-	uint32_t extensionCount;
-	vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL);
-    std::vector<VkExtensionProperties> extensions(extensionCount);
+    CORE_LOG_SUCCESS("   == Vulkan Extensions Supported ==");
 
-	vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, extensions.data());
-
-	CORE_LOG_SUCCESS("   == Vulkan Extensions Supported ==");
-
-	for (uint32_t i = 0; i < extensionCount; i++)
-	{
-		CORE_LOG_SUCCESS("   - NAME   %s || VERSION   %d", (const char*)extensions[i].extensionName, extensions[i].specVersion);
-	}
+    for (const auto& extension : vk::enumerateInstanceExtensionProperties())
+    {
+        CORE_LOG_SUCCESS("   - NAME   %s || VERSION   %d", (const char*)extension.extensionName, extension.specVersion);
+    }
 
 	//create instance
-	VkResult result = vkCreateInstance(&createInfo, NULL, &s_context.Instance);
-	CORE_ASSERT(result == VK_SUCCESS, "failed to create vulkan instance");
+    vk::Result result = vk::createInstance(&createInfo, NULL, &s_context.Instance);
+	CORE_ASSERT(result == vk::Result::eSuccess, "failed to create vulkan instance");
 
 	CORE_LOG_SUCCESS("Vulkan instance created");
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(s_context.Instance);
 }
 
-void RendererAPI::GLFWSetExtension(VkInstanceCreateInfo* createInfo, std::vector<const char*>&  extensions)
+void RendererAPI::DestroyInstance()
+{
+    s_context.Instance.destroy();
+    CORE_LOG_SUCCESS("renderer instance destroyed");
+}
+
+void RendererAPI::GLFWCreateSurface()
+{
+    VkSurfaceKHR surface;
+    VkResult result = glfwCreateWindowSurface(
+        s_context.Instance,
+        static_cast<GLFWwindow*>(Application::GetApp().GetMainWindow().GetNative()),
+        nullptr,
+        &surface
+    );
+    CORE_ASSERT_PARAMS(result == VK_SUCCESS, "failed to create surface, code: %d", result);
+
+    s_context.Surface = surface;
+    CORE_LOG_SUCCESS("GLFW Surface created");
+}
+
+void RendererAPI::GLFWDestroySurface()
+{
+    s_context.Instance.destroySurfaceKHR(s_context.Surface);
+    CORE_LOG_SUCCESS("glfw surface destroyed");
+}
+
+void RendererAPI::GLFWSetExtension(vk::InstanceCreateInfo* createInfo, std::vector<const char*>&  extensions)
 {
 	uint32_t glfwExtensionCount = 0;
-	const char* const* glfwExtensions;
-	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	const char* const* glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    for(uint32_t i; i < glfwExtensionCount; ++i)
+	CORE_LOG_SUCCESS("   == Vulkan GLFW required extensions count: %zu ==", glfwExtensionCount);
+    for(uint32_t i = 0; i < glfwExtensionCount; ++i)
     {
+        CORE_LOG_SUCCESS("   - NAME   %s", glfwExtensions[i]);
         extensions.emplace_back(glfwExtensions[i]);
     }
 
-	CORE_LOG_SUCCESS("   == Vulkan GLFW required extensions ==");
+	CORE_LOG_SUCCESS("   == Vulkan final GLFW extensions ==");
 	for (size_t i = 0; i < extensions.size(); i++)
 	{
 		CORE_LOG_SUCCESS("   - NAME   %s", extensions[i]);
@@ -539,10 +588,21 @@ void RendererAPI::GLFWSetExtension(VkInstanceCreateInfo* createInfo, std::vector
 	createInfo->ppEnabledExtensionNames = extensions.data();
 }
 
-VkQueue RendererAPI::CreateQueue(int& outIndex)
+void RendererAPI::CreateFrameBuffer()
 {
-    outIndex = 0;
-    return nullptr;
+    SwapchainData& data = s_swapchain.GetData();
+
+    nvrhi::FramebufferDesc framebufferDesc = nvrhi::FramebufferDesc();
+    for(const auto& texture : data.Textures)
+    {
+        framebufferDesc.addColorAttachment(texture); // you can specify a particular subresource if necessary
+    }
+    s_context.Framebuffer = s_context.DeviceHandle->createFramebuffer(framebufferDesc);
+}
+
+void RendererAPI::DestroyFrameBuffer()
+{
+    s_context.Framebuffer = nullptr;
 }
 
 }

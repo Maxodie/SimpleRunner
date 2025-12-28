@@ -25,6 +25,7 @@ using TypeID = std::type_index;
 
 #ifdef SR_ASSERT
 #define CORE_ASSERT(test, msg) do{ if(!(test)) { CORE_LOG_ERROR(msg); assert(0); } } while(0)
+#define CORE_ASSERT_PARAMS(test, msg, ...) do{ if(!(test)) { CORE_LOG_ERROR(msg, __VA_ARGS__); assert(0); } } while(0)
 #define CLIENT_ASSERT(test, msg) do{ if(!(test)) { CLIENT_LOG_ERROR(msg); assert(0); } } while(0)
 #else
 #define CORE_ASSERT(test, msg)

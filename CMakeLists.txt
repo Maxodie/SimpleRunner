@@ -24,6 +24,7 @@ set(BIN_OUTPUT_DIR "/bin/${CMAKE_SYSTEM_NAME}")
 set(OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}${BIN_OUTPUT_DIR}")
 
 find_package(Vulkan REQUIRED)
+message("Vulkan package version: ${Vulkan_VERSION}")
 
 include(SimpleRunner/SimpleRunner.cmake)
 include(SimpleRunnerEditor/SimpleRunnerEditor.cmake)

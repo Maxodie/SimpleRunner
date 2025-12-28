@@ -14,6 +14,7 @@ Window::Window(const Data& data)
 Window::~Window()
 {
     Destroy();
+    CORE_LOG_SUCCESS("glfw window destroyed");
 }
 
 void Window::PollEvent()
@@ -26,6 +27,7 @@ void Window::Create()
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     m_native = glfwCreateWindow(m_data.Width, m_data.Height, m_data.Name.c_str(), NULL, NULL);
     if(!m_native)
@@ -33,11 +35,11 @@ void Window::Create()
         CORE_ASSERT(false, "Failed to create glfw window");
     }
 
-    glfwMakeContextCurrent(m_native);
-    glfwSetWindowUserPointer(m_native, &m_data);
+    glfwMakeContextCurrent(static_cast<GLFWwindow*>(m_native));
+    glfwSetWindowUserPointer(static_cast<GLFWwindow*>(m_native), &m_data);
 
     glfwSetWindowCloseCallback(
-        m_native,
+        static_cast<GLFWwindow*>(m_native),
         [](GLFWwindow* window)
         {
             Data* data = static_cast<Data*>(glfwGetWindowUserPointer(window));
@@ -52,7 +54,8 @@ void Window::Destroy()
 {
     if(m_native)
     {
-        glfwDestroyWindow(m_native);
+        glfwDestroyWindow(static_cast<GLFWwindow*>(m_native));
+        m_native = nullptr;
     }
     CORE_LOG_SUCCESS("glfw window destroyed");
 }
