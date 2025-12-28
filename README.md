@@ -1,5 +1,16 @@
 # SimpleRunner
 
+## Dependencies
+project submodules :
+- NVRHI
+- GLFW
+- GLM
+- STB
+- ImGui
+
+project package dependencies :
+- Vulkan (>= 1.4)
+
 ## Build
 cmake build options : `GIT_SUBMODULE` `CMAKE_EXPORT_COMPILE_COMMANDS` `COMPILE_CONFIG_BUILD`
 
