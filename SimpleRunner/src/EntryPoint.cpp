@@ -3,14 +3,12 @@
 
 int main(int cArgs, char** vArgs)
 {
-    SR::Application App;
-    App.Init();
+    SR::Application app;
+    app.Init();
 
-    StartApp();
+    StartApp(app);
 
-    App.Update();
+    app.Update();
 
-    App.Shutdown();
-
-    return 0;
+    app.Shutdown();
 }

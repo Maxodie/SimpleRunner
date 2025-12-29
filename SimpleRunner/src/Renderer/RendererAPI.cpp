@@ -17,6 +17,7 @@ namespace SR
 
 RendererContext RendererAPI::s_context;
 Swapchain RendererAPI::s_swapchain;
+GraphicsPipeline RendererAPI::s_graphicsPipeline;
 
 void RendererAPI::VulkanInitValidationLayer()
 {
@@ -153,15 +154,20 @@ void RendererAPI::Init()
         nvrhi::DeviceHandle nvrhiValidationLayer = nvrhi::validation::createValidationLayer(s_context.DeviceHandle);
         s_context.DeviceHandle = nvrhiValidationLayer;
     }
+    s_context.IsContextDeviceInitialized = true;
 
     s_swapchain.Init(s_context);
     CreateFrameBuffer();
+
+    s_graphicsPipeline.Create(s_context);
 
     CORE_LOG_SUCCESS("NVRHI vulkan initialized");
 }
 
 void RendererAPI::Shutdown()
 {
+    s_graphicsPipeline.Destroy(s_context);
+
     DestroyFrameBuffer();
     s_swapchain.Shutdown(s_context);
 
@@ -445,7 +451,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(
 	const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
-	if (RendererAPI::GetContext().EnableValidationLayers || messageSeverity >= vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eWarning)
+    RendererContext& context = *static_cast<RendererContext*>(pUserData);
+	if (context.EnableValidationLayers || messageSeverity >= vk::DebugUtilsMessageSeverityFlagsEXT::BitsType::eWarning)
 	{
 		VulkanShowDebug(messageSeverity, pCallbackData);
 	}
@@ -465,7 +472,7 @@ void RendererAPI::VulkanPopulateDebugMessenger(vk::DebugUtilsMessengerCreateInfo
                              vk::DebugUtilsMessageTypeFlagsEXT::BitsType::ePerformance;
 
 	createInfo.pfnUserCallback = VulkanDebugCallback;
-	createInfo.pUserData = nullptr;
+	createInfo.pUserData = &s_context;
 }
 
 void RendererAPI::CreateInstance()

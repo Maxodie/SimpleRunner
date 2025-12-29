@@ -10,6 +10,8 @@ class Layer
 public:
     virtual ~Layer();
     virtual void OnEvent(Event& event) = 0;
+    virtual void Update() = 0;
+    virtual void Render() = 0;
 
     TypeID id;
 };
@@ -17,20 +19,22 @@ public:
 class LayerStack
 {
 public:
-    template<typename TLayer, typename...TArgs>
+    template<typename TLayer = Layer, typename...TArgs>
     void AddLayer(TArgs&&... args)
     {
-        auto& found = std::find_if(
+        const auto& found = std::find_if(
             m_layers.begin(), m_layers.end(),
-            [&](auto& layer)
+            [&](const auto& layer)
             {
                 return layer->id == GetTypeID<TLayer>();
             }
         );
 
-        if(!*found)
+        if(found != m_layers.end())
         {
-            m_layers.emplace_back(std::forward(args)...);
+            std::unique_ptr<TLayer> layer(std::forward<TArgs>(args)...);
+            layer->id = GetTypeID<TLayer>();
+            m_layers.emplace_back(std::move(layer));
         }
     }
 

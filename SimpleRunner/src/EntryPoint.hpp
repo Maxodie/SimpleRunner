@@ -1,3 +1,4 @@
 #pragma once
+#include "Core/Application.hpp"
 
-extern void StartApp();
+extern void StartApp(SR::Application& app);

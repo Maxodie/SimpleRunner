@@ -28,6 +28,13 @@ add_library(SimpleRunner
         SimpleRunner/src/Renderer/Swapchain.cpp
         SimpleRunner/src/Renderer/GraphicsPipeline.hpp
         SimpleRunner/src/Renderer/GraphicsPipeline.cpp
+        SimpleRunner/src/Renderer/Buffer.hpp
+        SimpleRunner/src/Renderer/Buffer.cpp
+        SimpleRunner/src/Renderer/Texture.hpp
+        SimpleRunner/src/Renderer/Texture.cpp
+        SimpleRunner/src/Renderer/Vertex.hpp
+        SimpleRunner/src/Renderer/Renderer2D.hpp
+        SimpleRunner/src/Renderer/Renderer2D.cpp
 )
 
 target_link_libraries(SimpleRunner PUBLIC

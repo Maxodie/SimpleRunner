@@ -104,14 +104,29 @@ void Swapchain::Create(RendererContext& context)
     {
         m_data.Textures[i] = context.DeviceHandle->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(m_data.Images[i]), textureDesc);
     }
+
+    m_data.CurrentFrame = 0;
+
+    CORE_LOG_SUCCESS("Vulkan Swapchain created");
 }
 
 void Swapchain::Destroy(RendererContext& context)
 {
-    context.Device.destroySwapchainKHR(m_data.Swapchain);
+    if (context.Device)
+    {
+        context.Device.waitIdle();
+    }
+
+    if(m_data.Swapchain)
+    {
+        context.Device.destroySwapchainKHR(m_data.Swapchain);
+        m_data.Swapchain = nullptr;
+    }
 
     m_data.Images.clear();
     m_data.Textures.clear();
+
+    CORE_LOG_SUCCESS("Vulkan Swapchain destroyed");
 }
 
 bool Swapchain::VulkanSwapChainSupportByQuery(RendererContext& context)
@@ -157,8 +172,6 @@ void Swapchain::ImagesQuery(RendererContext& context)
     m_data.Images.resize(m_data.ImageCount);
     vk::Result result = context.Device.getSwapchainImagesKHR(m_data.Swapchain, &m_data.ImageCount, m_data.Images.data());
     CORE_ASSERT(result == vk::Result::eSuccess, "failed to get swapchain images");
-
-    m_data.CurrentFrame = 0;
 
     //setup frames in flight
 

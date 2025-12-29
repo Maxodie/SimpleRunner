@@ -1,11 +1,20 @@
 #pragma once
 #include "Renderer/VulkanInclude.hpp"
+#include "nvrhi/nvrhi.h"
 
 namespace SR
 {
     class RendererMessageCallback : public nvrhi::IMessageCallback
     {
         virtual void message(nvrhi::MessageSeverity severity, const char* messageText) override;
+    };
+
+    struct GraphicsPipelineData
+    {
+        nvrhi::ShaderHandle VertexShader;
+        nvrhi::ShaderHandle FragmentShader;
+        nvrhi::InputLayoutHandle InputLayoutHandle;
+        nvrhi::GraphicsPipelineHandle GraphicsPipeline;
     };
 
     struct SwapchainData
@@ -50,7 +59,8 @@ namespace SR
 
         bool SupportsDeviceLocalHostVisible;
         bool EnableValidationLayers = true;
-        char padding[2];
+        bool IsContextDeviceInitialized = false;
+        char padding[1];
         int GraphicsQueueIndex = 0;
 
         std::optional<uint32_t> GraphicsFamily = {};

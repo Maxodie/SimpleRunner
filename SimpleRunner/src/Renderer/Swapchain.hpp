@@ -13,7 +13,10 @@ public:
     void InitSwapChainSupportData(RendererContext& context);
     void ShutdownSwapChainSupportData();
 
-    SR_INLINE SwapchainData& GetData() { return m_data; }
+    SR_INLINE SwapchainData& GetData()
+    {
+        return m_data;
+    }
 
     SR_INLINE void Recreate(RendererContext& context)
     {

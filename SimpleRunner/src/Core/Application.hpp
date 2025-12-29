@@ -39,11 +39,11 @@ public:
 
     void Stop();
 
-    template<typename TLayer, typename... TArgs>
+    template<typename TLayer = Layer, typename... TArgs>
     void AddLayer(TArgs&&... args)
     {
         //post as an event
-        m_layerStack.AddLayer<TLayer>(std::forward(args)...);
+        m_layerStack.AddLayer<TLayer>(std::forward<TArgs>(args)...);
     }
 
     template<typename TLayer>

@@ -2,6 +2,7 @@
 #include "Core/Core.hpp"
 #include "Event/Event.hpp"
 #include "Event/WindowEvent.hpp"
+#include "Renderer/Renderer2D.hpp"
 #include "Window/GraphicsContext.hpp"
 #include "Window/Window.hpp"
 #include "Renderer/RendererAPI.hpp"
@@ -29,6 +30,7 @@ void Application::Init()
     );
 
     RendererAPI::Init();
+    Renderer2D::Init();
 
     m_isRunning = true;
     CORE_LOG_SUCCESS("Application initialized");
@@ -39,6 +41,16 @@ void Application::Update()
     while(m_isRunning)
     {
         m_window->PollEvent();
+
+        for(auto& layer : m_layerStack.GetStack())
+        {
+            layer->Update();
+        }
+
+        for(auto& layer : m_layerStack.GetStack())
+        {
+            layer->Render();
+        }
     }
 }
 
@@ -46,6 +58,7 @@ void Application::Shutdown()
 {
     m_window = nullptr;
 
+    Renderer2D::Shutdown();
     RendererAPI::Shutdown();
 
     GraphicsContext::Shutdown();

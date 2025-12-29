@@ -8,6 +8,7 @@
 #include <typeindex>
 #include <unordered_map>
 #include <map>
+#include <memory>
 #include <vector>
 #include <array>
 #include <stack>
