@@ -1,9 +1,9 @@
 #pragma once
-#include "Renderer/Swapchain.hpp"
+#include "Renderer/VulkanStructures.hpp"
+#include "Renderer/SwapChain.hpp"
 #include "Renderer/GraphicsPipeline.hpp"
 #include "Renderer/Buffer.hpp"
 #include "Renderer/CommandList.hpp"
-#include "Renderer/VulkanStructures.hpp"
 
 namespace SR
 {
@@ -16,7 +16,7 @@ public:
 
     SR_INLINE static void ExecuteCommandList(CommandList& commandList)
     {
-        GetContext().DeviceHandle->executeCommandList(commandList.GetHandle());
+        GetContext().GetHandle()->executeCommandList(commandList.GetHandle());
     }
 
     SR_INLINE static RendererContext& GetContext()
@@ -36,12 +36,15 @@ public:
             .setPipeline(s_graphicsPipeline.GetData().GraphicsPipeline)
             .setFramebuffer(GetContext().Framebuffer)
             .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(
-                nvrhi::Viewport(s_swapchain.GetData().Width, s_swapchain.GetData().Height))
+                nvrhi::Viewport(s_swapChain.GetData().Width, s_swapChain.GetData().Height))
             )
             // .addBindingSet(bindingSet)
             .addVertexBuffer(vertexBufferBinding);
         commandList.GetHandle()->setGraphicsState(graphicsState);
     }
+
+    static void BeginFrame(CommandList& commandList, const nvrhi::Color& clearColor);
+    static void Present();
 
 private:
     static void VulkanInitValidationLayer();
@@ -63,12 +66,12 @@ private:
 
     static void GLFWSetExtension(vk::InstanceCreateInfo* createInfo, std::vector<const char*>& extensionList);
 
-    static void CreateFrameBuffer();
+    static void CreateFramebuffer();
     static void DestroyFrameBuffer();
 
 private:
     static RendererContext s_context;
-    static Swapchain s_swapchain;
+    static SwapChain s_swapChain;
     static GraphicsPipeline s_graphicsPipeline;
 };
 

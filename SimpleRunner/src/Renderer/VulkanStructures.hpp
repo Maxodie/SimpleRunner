@@ -1,6 +1,5 @@
 #pragma once
 #include "Renderer/VulkanInclude.hpp"
-#include "nvrhi/nvrhi.h"
 
 namespace SR
 {
@@ -17,9 +16,8 @@ namespace SR
         nvrhi::GraphicsPipelineHandle GraphicsPipeline;
     };
 
-    struct SwapchainData
+    struct SwapChainData
     {
-        std::vector<vk::Image> Images;
         std::vector<nvrhi::TextureHandle> Textures;
 
         vk::Format ImageFormat;
@@ -29,9 +27,10 @@ namespace SR
 
         vk::CompositeAlphaFlagBitsKHR AlphaFlagBitsKHR = vk::CompositeAlphaFlagBitsKHR::eOpaque;
 
-        vk::SwapchainKHR Swapchain = nullptr;
+        vk::SwapchainKHR SwapChain = nullptr;
+        uint32_t CurrentSwapChainId;
 
-        vk::ImageUsageFlags ImageUsage = vk::ImageUsageFlags::BitsType::eColorAttachment | vk::ImageUsageFlags::BitsType::eSampled;
+        vk::ImageUsageFlags ImageUsage = vk::ImageUsageFlags::BitsType::eTransferDst | vk::ImageUsageFlags::BitsType::eColorAttachment | vk::ImageUsageFlags::BitsType::eSampled;
         uint32_t ImageCount;
 
         uint32_t Width, Height;
@@ -40,14 +39,43 @@ namespace SR
         std::vector<vk::SurfaceFormatKHR> SurfaceFormats;
         std::vector<vk::PresentModeKHR> SurfacePresentModes;
 
+        std::vector<vk::Semaphore> PresentSemaphores;
+        std::vector<vk::Semaphore> AcquireSemaphores;
+
         uint32_t CurrentFrame;
         uint32_t MaxFramesInFlight;
+
+        std::queue<nvrhi::EventQueryHandle> FramesInFlight;
+        std::vector<nvrhi::EventQueryHandle> QueryPool;
     };
 
     struct RendererContext
     {
-        nvrhi::DeviceHandle DeviceHandle;
+        nvrhi::DeviceHandle GetHandle()
+        {
+            return EnableValidationLayers && ValidationLayer ? ValidationLayer : DeviceHandle;
+        }
 
+        nvrhi::vulkan::DeviceHandle& GetVulkanHandle()
+        {
+            return DeviceHandle;
+        }
+
+        void SetHandle(const nvrhi::vulkan::DeviceHandle& consumedHandle)
+        {
+            DeviceHandle = std::move(consumedHandle);
+        }
+
+        void SetValidationHandle(const nvrhi::DeviceHandle& consumedHandle)
+        {
+            ValidationLayer = std::move(consumedHandle);
+        }
+
+    private:
+        nvrhi::vulkan::DeviceHandle DeviceHandle = nullptr;
+        nvrhi::DeviceHandle ValidationLayer = nullptr;
+
+    public:
         RendererMessageCallback ErrorCallback;
         vk::PhysicalDevice PhysicalDevice = VK_NULL_HANDLE;
         vk::Instance Instance = VK_NULL_HANDLE;
@@ -56,6 +84,7 @@ namespace SR
         vk::PhysicalDeviceProperties PhysicalDeviceProperties;
         vk::PhysicalDeviceMemoryProperties PhysicalDeviceMemoryProperties;
         std::vector<const char*> ValidationLayers;
+        std::vector<const char*> PhysicalDeviceExtensions;
 
         bool SupportsDeviceLocalHostVisible;
         bool EnableValidationLayers = true;

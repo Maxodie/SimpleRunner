@@ -28,6 +28,17 @@ public:
         return m_native;
     }
 
+    SR_INLINE void SetDataSize(uint32_t width, uint32_t height)
+    {
+        m_data.Width = width;
+        m_data.Height = height;
+    }
+
+    SR_INLINE const Data& GetData()
+    {
+        return m_data;
+    }
+
 private:
     void Create();
     void Destroy();

@@ -11,7 +11,7 @@ class CommandList
 public:
     SR_INLINE void Create(RendererContext& context)
     {
-        m_handle = context.DeviceHandle->createCommandList();
+        m_handle = context.GetHandle()->createCommandList();
     }
 
     SR_INLINE void Destroy()

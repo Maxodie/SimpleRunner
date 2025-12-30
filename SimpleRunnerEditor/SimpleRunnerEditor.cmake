@@ -20,8 +20,8 @@ if(CONFIG_COMPILE_DEFINITION STREQUAL SR_EDITOR)
     )
 
     target_compile_definitions(SimpleRunnerEditor PRIVATE
-        SR_LOGGER
-        SR_ASSERT
+        "$<$<CONFIG:debug>:SR_LOGGER>"
+        "$<$<CONFIG:debug>:SR_ASSERT>"
 
         ${CONFIG_COMPILE_DEFINITION}
     )

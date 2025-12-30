@@ -1,4 +1,2 @@
-mkdir build
-
 cmake --preset=debug
-mingw32-make -C ./build -j8
+mingw32-make -C ./build/debug -j8

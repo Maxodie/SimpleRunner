@@ -1,16 +1,20 @@
-#include "Renderer/Swapchain.hpp"
-#include "nvrhi/common/resource.h"
-#include <vulkan/vulkan_core.h>
+#include "Renderer/SwapChain.hpp"
+#include "Core/Application.hpp"
 
 namespace SR
 {
 
-void Swapchain::Init(RendererContext& context)
+void SwapChain::Init(RendererContext& context)
 {
+    const Window::Data& data = Application::GetApp().GetMainWindow().GetData();
+    m_data.Width = data.Width;
+    m_data.Height = data.Height;
+
     InitSwapChainSupportData(context);
 
     VulkanSwapChainSupportByQuery(context);
 
+    m_data.CurrentFrame = 0;
     m_data.ImageCount = m_data.Capabilitites.minImageCount + 1;
 
     if (m_data.Capabilitites.maxImageCount > 0 && m_data.ImageCount > m_data.Capabilitites.maxImageCount)// if maxImageCount == 0 then imageCount is illimited
@@ -18,20 +22,23 @@ void Swapchain::Init(RendererContext& context)
         m_data.ImageCount = m_data.Capabilitites.maxImageCount;
     }
 
+    m_data.MaxFramesInFlight = 2;
+
     Create(context);
-    ImagesQuery(context);
+    CreateSemaphores(context);
 }
 
-void Swapchain::Shutdown(RendererContext& context)
+void SwapChain::Shutdown(RendererContext& context)
 {
     Destroy(context);
+    DestroySemaphores(context);
     ShutdownSwapChainSupportData();
 }
 
-void Swapchain::InitSwapChainSupportData(RendererContext& context)
+void SwapChain::InitSwapChainSupportData(RendererContext& context)
 {
-    uint32_t formatCount;
-    vk::Result result = context.PhysicalDevice.getSurfaceFormatsKHR(context.Surface, &formatCount, nullptr);
+uint32_t formatCount;
+vk::Result result = context.PhysicalDevice.getSurfaceFormatsKHR(context.Surface, &formatCount, nullptr);
     CORE_ASSERT_PARAMS(result == vk::Result::eSuccess, "failed to get surface formats code: %d", result);
 
     if (formatCount)
@@ -49,14 +56,115 @@ void Swapchain::InitSwapChainSupportData(RendererContext& context)
     }
 }
 
-void Swapchain::ShutdownSwapChainSupportData()
+void SwapChain::ShutdownSwapChainSupportData()
 {
     m_data.SurfacePresentModes.clear();
     m_data.SurfaceFormats.clear();
 }
 
-void Swapchain::Create(RendererContext& context)
+bool SwapChain::BeginFrame(CommandList& commandList, RendererContext& context)
 {
+    const auto& semaphore = m_data.AcquireSemaphores[m_data.CurrentFrame];
+
+    vk::Result result;
+
+    int const maxAttempts = 3;
+    for (int attempt = 0; attempt < maxAttempts; ++attempt)
+    {
+        result = context.Device.acquireNextImageKHR(
+            m_data.SwapChain,
+            (std::numeric_limits<uint64_t>::max)(), // timeout
+            semaphore,
+            vk::Fence(),
+            &m_data.CurrentSwapChainId);
+
+        if ((result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) && attempt < maxAttempts)
+        {
+            auto surfaceCaps = context.PhysicalDevice.getSurfaceCapabilitiesKHR(context.Surface);
+
+            m_data.Width = surfaceCaps.currentExtent.width;
+            m_data.Height = surfaceCaps.currentExtent.height;
+
+            Recreate(context);
+        }
+        else
+            break;
+    }
+
+    m_data.CurrentFrame = (m_data.CurrentFrame + 1) % m_data.AcquireSemaphores.size();
+
+    if (result == vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR) // Suboptimal is considered a success
+    {
+        // Schedule the wait. The actual wait operation will be submitted when the app executes any command list.
+        context.GetVulkanHandle()->queueWaitForSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
+        return true;
+    }
+
+    return false;
+}
+
+bool SwapChain::Present(RendererContext& context)
+{
+    const auto& semaphore = m_data.PresentSemaphores[m_data.CurrentSwapChainId];
+
+    context.GetVulkanHandle()->queueSignalSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
+
+    // NVRHI buffers the semaphores and signals them when something is submitted to a queue.
+    // Call 'executeCommandLists' with no command lists to actually signal the semaphore.
+    context.GetVulkanHandle()->executeCommandLists(nullptr, 0);
+
+    vk::PresentInfoKHR info = vk::PresentInfoKHR()
+                                .setWaitSemaphoreCount(1)
+                                .setPWaitSemaphores(&semaphore)
+                                .setSwapchainCount(1)
+                                .setPSwapchains(&m_data.SwapChain)
+                                .setPImageIndices(&m_data.CurrentSwapChainId);
+
+    const vk::Result res = context.PresentQueue.presentKHR(&info);
+    if (!(res == vk::Result::eSuccess || res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR))
+    {
+        return false;
+    }
+
+#ifndef _WIN32
+    if (m_DeviceParams.vsyncEnabled || m_DeviceParams.enableDebugRuntime)
+    {
+        // according to vulkan-tutorial.com, "the validation layer implementation expects
+        // the application to explicitly synchronize with the GPU"
+        m_PresentQueue.waitIdle();
+    }
+#endif
+
+    while (m_data.FramesInFlight.size() >= m_data.MaxFramesInFlight)
+    {
+        auto query = m_data.FramesInFlight.front();
+        m_data.FramesInFlight.pop();
+
+        context.GetHandle()->waitEventQuery(query);
+
+        m_data.QueryPool.push_back(query);
+    }
+
+    nvrhi::EventQueryHandle query;
+    if (!m_data.QueryPool.empty())
+    {
+        query = m_data.QueryPool.back();
+        m_data.QueryPool.pop_back();
+    }
+    else
+    {
+        query = context.GetHandle()->createEventQuery();
+    }
+
+    context.GetHandle()->resetEventQuery(query);
+    context.GetHandle()->setEventQuery(query, nvrhi::CommandQueue::Graphics);
+    m_data.FramesInFlight.push(query);
+    return true;
+}
+
+void SwapChain::Create(RendererContext& context)
+{
+    CORE_ASSERT(!m_data.SwapChain, "Trying to create a swapChain before destroying the current one");
 
     vk::SwapchainCreateInfoKHR createInfo{};
     createInfo.surface = context.Surface;
@@ -70,7 +178,7 @@ void Swapchain::Create(RendererContext& context)
     createInfo.compositeAlpha = m_data.AlphaFlagBitsKHR;
     createInfo.presentMode = m_data.PresentMode;
     createInfo.clipped = true;
-    createInfo.oldSwapchain = m_data.Swapchain;
+    createInfo.oldSwapchain = m_data.SwapChain;
 
     const uint32_t queueFamilyIndices[] = { context.GraphicsFamily.value(), context.PresentFamily.value() };
 
@@ -87,49 +195,87 @@ void Swapchain::Create(RendererContext& context)
         createInfo.pQueueFamilyIndices = nullptr; // Optionnal
     }
 
-    m_data.Swapchain = context.Device.createSwapchainKHR(createInfo);
+    m_data.SwapChain = context.Device.createSwapchainKHR(createInfo);
 
-    auto textureDesc = nvrhi::TextureDesc()
-        .setDimension(nvrhi::TextureDimension::Texture2D)
-        .setFormat(nvrhi::Format::RGBA8_UNORM)
-        .setWidth(m_data.Width)
-        .setHeight(m_data.Height)
-        .setIsRenderTarget(true)
-        .setDebugName("Swap Chain Image");
+    auto images = context.Device.getSwapchainImagesKHR(m_data.SwapChain);
 
-    // In this line, <type> depends on the GAPI and should be one of: D3D11_Resource, D3D12_Resource, VK_Image.
-
-    m_data.Textures.resize(m_data.Images.size());
-    for(size_t i = 0; i < m_data.Images.size(); ++i)
+    m_data.Textures.resize(images.size());
+    for(size_t i = 0; i < images.size(); ++i)
     {
-        m_data.Textures[i] = context.DeviceHandle->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(m_data.Images[i]), textureDesc);
+        auto textureDesc = nvrhi::TextureDesc()
+            .setDimension(nvrhi::TextureDimension::Texture2D)
+            .setFormat(nvrhi::Format::RGBA8_UNORM)
+            .setWidth(m_data.Width)
+            .setHeight(m_data.Height)
+            .setIsRenderTarget(true)
+            .setDebugName("Swap Chain Image")
+            .setKeepInitialState(true)
+            .setInitialState(nvrhi::ResourceStates::Present);
+
+        m_data.Textures[i] = context.GetHandle()->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(images[i]), textureDesc);
     }
 
-    m_data.CurrentFrame = 0;
+    m_data.CurrentSwapChainId = 0;
 
     CORE_LOG_SUCCESS("Vulkan Swapchain created");
 }
 
-void Swapchain::Destroy(RendererContext& context)
+void SwapChain::Destroy(RendererContext& context)
 {
     if (context.Device)
     {
         context.Device.waitIdle();
     }
 
-    if(m_data.Swapchain)
+    if(m_data.SwapChain)
     {
-        context.Device.destroySwapchainKHR(m_data.Swapchain);
-        m_data.Swapchain = nullptr;
+        context.Device.destroySwapchainKHR(m_data.SwapChain);
+        m_data.SwapChain = nullptr;
     }
 
-    m_data.Images.clear();
     m_data.Textures.clear();
 
     CORE_LOG_SUCCESS("Vulkan Swapchain destroyed");
 }
 
-bool Swapchain::VulkanSwapChainSupportByQuery(RendererContext& context)
+void SwapChain::CreateSemaphores(RendererContext& context)
+{
+    const uint32_t presentSemaphoreCount = m_data.ImageCount;
+    m_data.PresentSemaphores.reserve(presentSemaphoreCount);
+    for(uint32_t i = 0; i < presentSemaphoreCount; ++i)
+    {
+        m_data.PresentSemaphores.push_back(context.Device.createSemaphore(vk::SemaphoreCreateInfo()));
+    }
+
+    const uint32_t acquireSemaphoreCount = m_data.MaxFramesInFlight;
+    for(uint32_t i = 0; i < acquireSemaphoreCount; ++i)
+    {
+        m_data.AcquireSemaphores.push_back(context.Device.createSemaphore(vk::SemaphoreCreateInfo()));
+    }
+}
+
+void SwapChain::DestroySemaphores(RendererContext& context)
+{
+    for(auto& semaphore : m_data.AcquireSemaphores)
+    {
+        if(semaphore)
+        {
+            context.Device.destroySemaphore(semaphore);
+        }
+    }
+    m_data.AcquireSemaphores.clear();
+
+    for(auto& semaphore : m_data.PresentSemaphores)
+    {
+        if(semaphore)
+        {
+            context.Device.destroySemaphore(semaphore);
+        }
+    }
+    m_data.PresentSemaphores.clear();
+}
+
+bool SwapChain::VulkanSwapChainSupportByQuery(RendererContext& context)
 {
     //Set details : capabilities, format and presentMode
     vk::Result result = context.PhysicalDevice.getSurfaceCapabilitiesKHR(context.Surface, &m_data.Capabilitites);
@@ -166,27 +312,11 @@ bool Swapchain::VulkanSwapChainSupportByQuery(RendererContext& context)
     return TRUE;
 }
 
-void Swapchain::ImagesQuery(RendererContext& context)
-{
-    //cache and retrieving the swap chain data
-    m_data.Images.resize(m_data.ImageCount);
-    vk::Result result = context.Device.getSwapchainImagesKHR(m_data.Swapchain, &m_data.ImageCount, m_data.Images.data());
-    CORE_ASSERT(result == vk::Result::eSuccess, "failed to get swapchain images");
-
-    //setup frames in flight
-
-    //Double buffering
-    m_data.MaxFramesInFlight = m_data.Images.size() < 2 ? m_data.Images.size() : 2;
-
-    //Triple buffering
-    //vkInfo->swapChain.maxFramesInFlight = vkInfo->swapChain.images.impl.count < 3 ? (Uint32)vkInfo->swapChain.images.impl.count : 3;
-}
-
-vk::SurfaceFormatKHR Swapchain::VulkanChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats)
+vk::SurfaceFormatKHR SwapChain::VulkanChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats)
 {
     for (size_t i = 0; i < availableFormats.size(); i++)
     {
-        if (availableFormats[i].format == vk::Format::eB8G8R8A8Srgb && availableFormats[i].colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+        if (availableFormats[i].format == vk::Format::eR8G8B8A8Unorm && availableFormats[i].colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
         {
             return availableFormats[i];
         }
@@ -195,7 +325,7 @@ vk::SurfaceFormatKHR Swapchain::VulkanChooseSwapSurfaceFormat(const std::vector<
     return availableFormats[0];
 }
 
-vk::PresentModeKHR Swapchain::VulkanChooseSwapPresentMode(const std::vector<vk::PresentModeKHR> availablePresentModes)
+vk::PresentModeKHR SwapChain::VulkanChooseSwapPresentMode(const std::vector<vk::PresentModeKHR> availablePresentModes)
 {
     for (size_t i = 0; i < availablePresentModes.size(); i++)
     {
@@ -208,7 +338,7 @@ vk::PresentModeKHR Swapchain::VulkanChooseSwapPresentMode(const std::vector<vk::
     return vk::PresentModeKHR::eMailbox;
 }
 
-vk::Extent2D Swapchain::VulkanChooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities)
+vk::Extent2D SwapChain::VulkanChooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities)
 {
     if (capabilities.currentExtent.width != UINT32_MAX)
     {

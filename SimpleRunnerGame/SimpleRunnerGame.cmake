@@ -20,8 +20,8 @@ if(CONFIG_COMPILE_DEFINITION STREQUAL SR_BUILD)
     )
 
     target_compile_definitions(SimpleRunnerGame PRIVATE
-        SR_LOGGER
-        SR_ASSERT
+        "$<$<CONFIG:debug>:SR_LOGGER>"
+        "$<$<CONFIG:debug>:SR_ASSERT>"
 
         ${CONFIG_COMPILE_DEFINITION}
     )

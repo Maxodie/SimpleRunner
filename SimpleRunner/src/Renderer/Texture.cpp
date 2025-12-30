@@ -21,7 +21,7 @@ void Texture::Create(RendererContext& context, const Data& data)
         .enableAutomaticStateTracking(nvrhi::ResourceStates::ShaderResource)
         .setDebugName("Geometry Texture");
 
-    nvrhi::TextureHandle geometryTexture = context.DeviceHandle->createTexture(textureDesc);
+    nvrhi::TextureHandle geometryTexture = context.GetHandle()->createTexture(textureDesc);
 }
 
 }

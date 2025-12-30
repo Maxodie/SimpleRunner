@@ -2,21 +2,21 @@
 #include "Core/Application.hpp"
 #include "Core/Core.hpp"
 #include "Log/Log.hpp"
+#include <vulkan/vulkan_core.h>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 #include "nvrhi/vulkan.h"
 #include "nvrhi/validation.h"
+#include "nvrhi/utils.h"
 
 #include <GLFW/glfw3.h>
-#include <algorithm>
-#include <vulkan/vulkan_core.h>
 
 namespace SR
 {
 
 RendererContext RendererAPI::s_context;
-Swapchain RendererAPI::s_swapchain;
+SwapChain RendererAPI::s_swapChain;
 GraphicsPipeline RendererAPI::s_graphicsPipeline;
 
 void RendererAPI::VulkanInitValidationLayer()
@@ -111,15 +111,6 @@ void RendererAPI::Init()
 
     const uint32_t minimumVulkanVersion = VK_MAKE_API_VERSION(0, 1, 4, 0);
 
-
-    const char* deviceExtensions[] =
-    {
-        "VK_KHR_acceleration_structure",
-        "VK_KHR_deferred_host_operations",
-        "VK_KHR_ray_tracing_pipeline",
-        // list the extensions that were requested when the device was created
-    };
-
     VulkanInitValidationLayer();
     CreateInstance();
 
@@ -145,21 +136,21 @@ void RendererAPI::Init()
     deviceDesc.computeQueue = nullptr;
     deviceDesc.transferQueue = nullptr;
     deviceDesc.graphicsQueueIndex = s_context.GraphicsQueueIndex;
-    deviceDesc.deviceExtensions = deviceExtensions;
-    deviceDesc.numDeviceExtensions = std::size(deviceExtensions);
+    deviceDesc.deviceExtensions = s_context.PhysicalDeviceExtensions.data();
+    deviceDesc.numDeviceExtensions = s_context.PhysicalDeviceExtensions.size();
 
-    s_context.DeviceHandle = nvrhi::vulkan::createDevice(deviceDesc);
+    s_context.SetHandle(nvrhi::vulkan::createDevice(deviceDesc));
     if(s_context.EnableValidationLayers)
     {
-        nvrhi::DeviceHandle nvrhiValidationLayer = nvrhi::validation::createValidationLayer(s_context.DeviceHandle);
-        s_context.DeviceHandle = nvrhiValidationLayer;
+        s_context.SetValidationHandle(nvrhi::validation::createValidationLayer(s_context.GetHandle()));
     }
     s_context.IsContextDeviceInitialized = true;
 
-    s_swapchain.Init(s_context);
-    CreateFrameBuffer();
+    s_swapChain.Init(s_context);
+    CreateFramebuffer();
 
-    s_graphicsPipeline.Create(s_context);
+    bool result = s_graphicsPipeline.Create(s_context);
+    CORE_ASSERT(result, "fail to create default graphics pipeline");
 
     CORE_LOG_SUCCESS("NVRHI vulkan initialized");
 }
@@ -169,25 +160,48 @@ void RendererAPI::Shutdown()
     s_graphicsPipeline.Destroy(s_context);
 
     DestroyFrameBuffer();
-    s_swapchain.Shutdown(s_context);
+    s_swapChain.Shutdown(s_context);
 
-    s_context.DeviceHandle = nullptr;
+    s_context.SetValidationHandle(nullptr);
+    s_context.SetHandle(nullptr);
 
     DestroyDevice();
     GLFWDestroySurface();
     DestroyInstance();
 
 
-    s_context.PhysicalDevice = VK_NULL_HANDLE;
+    s_context.PhysicalDevice = nullptr;
     RendererMessageCallback ErrorCallback;
-    s_context.Instance = VK_NULL_HANDLE;
-    s_context.Surface = VK_NULL_HANDLE;
+    s_context.Instance = nullptr;
+    s_context.Surface = nullptr;
 
-    s_context.Device = VK_NULL_HANDLE;
-    s_context.GraphicsQueue = VK_NULL_HANDLE;
-    s_context.PresentQueue = VK_NULL_HANDLE;
+    s_context.Device = nullptr;
+    s_context.GraphicsQueue = nullptr;
+    s_context.PresentQueue = nullptr;
 
     CORE_LOG_SUCCESS("RendererAPI has been shutdown");
+}
+
+void RendererAPI::BeginFrame(CommandList& commandList, const nvrhi::Color& clearColor)
+{
+    commandList.GetHandle()->open();
+
+    if(!s_swapChain.BeginFrame(commandList, s_context))
+    {
+        CORE_LOG_ERROR("vulkan renderer failed to begin frame");
+    }
+
+    nvrhi::utils::ClearColorAttachment(
+        commandList.GetHandle(), s_context.Framebuffer, 0, clearColor
+    );
+}
+
+void RendererAPI::Present()
+{
+    if(!s_swapChain.Present(s_context))
+    {
+        CORE_LOG_ERROR("vulkan renderer failed to present frame");
+    }
 }
 
 vk::PhysicalDevice RendererAPI::FindPhysicalDevice()
@@ -313,16 +327,16 @@ vk::Device RendererAPI::CreateDevice()
 	// vkEnumerateDeviceExtensionProperties(s_context.PhysicalDevice, NULL, &extensionCount, NULL);
     auto extensions = s_context.PhysicalDevice.enumerateDeviceExtensionProperties();
 
-    std::vector<const char*> requiredDeviceExtensionsNames = { "VK_KHR_swapchain" };
+    s_context.PhysicalDeviceExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    for(const auto& extension : extensions)
-    {
-        if (strcmp(extension.extensionName, "VK_KHR_portability_subset") == 0)
-        {
-            CORE_LOG_DEBUG("Adding required device extension 'VK_KHR_portability_subset'");
-            requiredDeviceExtensionsNames.emplace_back("VK_KHR_portability_subset");
-        }
-    }
+    // for(const auto& extension : extensions)
+    // {
+    //     if (strcmp(extension.extensionName, "VK_KHR_portability_subset") == 0)
+    //     {
+    //         CORE_LOG_DEBUG("Adding required device extension 'VK_KHR_portability_subset'");
+    //         s_context.PhysicalDeviceExtensions.emplace_back("VK_KHR_portability_subset");
+    //     }
+    // }
 
 	/*--------------------- Device Feature and Dynamic rendering features ---------------------*/
     vk::PhysicalDeviceFeatures2 deviceFeature{};
@@ -336,15 +350,6 @@ vk::Device RendererAPI::CreateDevice()
 	{
 		CORE_LOG_ERROR("ShaderClipDistance not supported by vulkan device '%s'", s_context.PhysicalDeviceProperties.deviceName);
 	}
-
-    vk::PhysicalDeviceBufferDeviceAddressFeatures deviceFeatureBufferAddress{};
-    deviceFeatureBufferAddress.bufferDeviceAddress = true;
-
-    vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures{};
-    dynamicRenderingFeatures.pNext = &deviceFeatureBufferAddress;
-    dynamicRenderingFeatures.dynamicRendering = true;
-
-	deviceFeature.pNext = &dynamicRenderingFeatures;
 
 	// requiredDeviceExtensionsNames.emplace_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 
@@ -380,12 +385,53 @@ vk::Device RendererAPI::CreateDevice()
 	}
 
 	/*--------------------- Fill Create infos ---------------------*/
+    vk::PhysicalDeviceFeatures2 physicalDeviceFeatures2;
+    auto bufferDeviceAddressFeature = vk::PhysicalDeviceBufferDeviceAddressFeatures();
+    bufferDeviceAddressFeature.pNext = physicalDeviceFeatures2;
+    s_context.PhysicalDevice.getFeatures2(&physicalDeviceFeatures2);
+
+    CORE_LOG_SUCCESS("   == Vulkan Device Extensions Supported ==");
+    bool synchronization2Supported = false;
+    for(auto extension : extensions)
+    {
+        // CORE_LOG_SUCCESS("   - NAME   %s || VERSION   %d", extension.extensionName, extension.specVersion);
+        if(std::strcmp(extension.extensionName, VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME) == 0)
+        {
+            synchronization2Supported = true;
+        }
+    }
+
+    // Add a Vulkan 1.1 structure with default settings to make it easier for apps to modify them
+    vk::PhysicalDeviceVulkan11Features vulkan11features = vk::PhysicalDeviceVulkan11Features()
+        .setStorageBuffer16BitAccess(true)
+        .setPNext(nullptr);
+
+    vk::PhysicalDeviceVulkan12Features vulkan12features = vk::PhysicalDeviceVulkan12Features()
+        .setDescriptorIndexing(true)
+        .setRuntimeDescriptorArray(true)
+        .setDescriptorBindingPartiallyBound(true)
+        .setDescriptorBindingVariableDescriptorCount(true)
+        .setTimelineSemaphore(true)
+        .setShaderSampledImageArrayNonUniformIndexing(true)
+        .setBufferDeviceAddress(bufferDeviceAddressFeature.bufferDeviceAddress)
+        .setShaderSubgroupExtendedTypes(true)
+        .setScalarBlockLayout(true)
+        .setPNext(&vulkan11features);
+
+    vk::PhysicalDeviceVulkan13Features vulkan13features = vk::PhysicalDeviceVulkan13Features()
+        .setDynamicRendering(true)
+        .setSynchronization2(synchronization2Supported)
+        .setPNext(&vulkan12features);
+
+    vulkan13features.pNext = &vulkan12features;
+    deviceFeature.pNext = &vulkan13features;
+
     vk::DeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.pNext = &deviceFeature;
     deviceCreateInfo.queueCreateInfoCount = (uint32_t)queueCreateInfos.size();
     deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-    deviceCreateInfo.enabledExtensionCount = (uint32_t)requiredDeviceExtensionsNames.size();
-    deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensionsNames.data();
+    deviceCreateInfo.enabledExtensionCount = (uint32_t)s_context.PhysicalDeviceExtensions.size();
+    deviceCreateInfo.ppEnabledExtensionNames = s_context.PhysicalDeviceExtensions.data();
 
 	//    vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo{ };
 	// if (s_context.EnableValidationLayers)
@@ -530,7 +576,7 @@ void RendererAPI::CreateInstance()
 
     GLFWSetExtension(&createInfo, createInfoExtensions);
 
-    CORE_LOG_SUCCESS("   == Vulkan Extensions Supported ==");
+    CORE_LOG_SUCCESS("   == Vulkan Window Extensions Supported ==");
 
     for (const auto& extension : vk::enumerateInstanceExtensionProperties())
     {
@@ -595,16 +641,19 @@ void RendererAPI::GLFWSetExtension(vk::InstanceCreateInfo* createInfo, std::vect
 	createInfo->ppEnabledExtensionNames = extensions.data();
 }
 
-void RendererAPI::CreateFrameBuffer()
+void RendererAPI::CreateFramebuffer()
 {
-    SwapchainData& data = s_swapchain.GetData();
+    SwapChainData& data = s_swapChain.GetData();
 
     nvrhi::FramebufferDesc framebufferDesc = nvrhi::FramebufferDesc();
     for(const auto& texture : data.Textures)
     {
         framebufferDesc.addColorAttachment(texture); // you can specify a particular subresource if necessary
     }
-    s_context.Framebuffer = s_context.DeviceHandle->createFramebuffer(framebufferDesc);
+
+    s_context.Framebuffer = s_context.GetHandle()->createFramebuffer(framebufferDesc);
+    auto framebufferInfo = s_context.Framebuffer->getFramebufferInfo();
+    framebufferInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM);
 }
 
 void RendererAPI::DestroyFrameBuffer()

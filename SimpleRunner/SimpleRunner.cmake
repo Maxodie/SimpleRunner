@@ -24,8 +24,8 @@ add_library(SimpleRunner
         SimpleRunner/src/Renderer/VulkanStructures.hpp
         SimpleRunner/src/Renderer/RendererAPI.hpp
         SimpleRunner/src/Renderer/RendererAPI.cpp
-        SimpleRunner/src/Renderer/Swapchain.hpp
-        SimpleRunner/src/Renderer/Swapchain.cpp
+        SimpleRunner/src/Renderer/SwapChain.hpp
+        SimpleRunner/src/Renderer/SwapChain.cpp
         SimpleRunner/src/Renderer/GraphicsPipeline.hpp
         SimpleRunner/src/Renderer/GraphicsPipeline.cpp
         SimpleRunner/src/Renderer/Buffer.hpp
@@ -43,6 +43,7 @@ target_link_libraries(SimpleRunner PUBLIC
     imgui
     StbImplementation
     Vulkan::Vulkan
+    Vulkan::shaderc_combined
     nvrhi
     nvrhi_vk
 )
@@ -58,17 +59,11 @@ set_target_properties(SimpleRunner PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR}/SimpleRunner
 )
 
-if(COMPILE_CONFIG_BUILD)
-    set(CONFIG_COMPILE_DEFINITION SR_BUILD)
-else()
-    set(CONFIG_COMPILE_DEFINITION SR_EDITOR)
-endif()
-
 message("==== Config compile definition : ${CONFIG_COMPILE_DEFINITION} ====")
 
 target_compile_definitions(SimpleRunner PRIVATE
-    SR_LOGGER
-    SR_ASSERT
+    "$<$<CONFIG:debug>:SR_LOGGER>"
+    "$<$<CONFIG:debug>:SR_ASSERT>"
 
     ${CONFIG_COMPILE_DEFINITION}
 )

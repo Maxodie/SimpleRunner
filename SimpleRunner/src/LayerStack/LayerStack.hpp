@@ -8,12 +8,13 @@ namespace SR
 class Layer
 {
 public:
-    virtual ~Layer();
+    Layer() = default;
+    virtual ~Layer() = default;
     virtual void OnEvent(Event& event) = 0;
     virtual void Update() = 0;
     virtual void Render() = 0;
 
-    TypeID id;
+    TypeIDptr id;
 };
 
 class LayerStack
@@ -26,14 +27,15 @@ public:
             m_layers.begin(), m_layers.end(),
             [&](const auto& layer)
             {
-                return layer->id == GetTypeID<TLayer>();
+                return layer->id == GetTypeIDptr<TLayer>();
             }
         );
 
-        if(found != m_layers.end())
+        if(found == m_layers.end())
         {
-            std::unique_ptr<TLayer> layer(std::forward<TArgs>(args)...);
-            layer->id = GetTypeID<TLayer>();
+            std::unique_ptr<TLayer> layer = std::make_unique<TLayer>(std::forward<TArgs>(args)...);
+            layer->id = GetTypeIDptr<TLayer>();
+            CORE_LOG_SUCCESS("Layer %s has been added to layer stack", layer->id->name());
             m_layers.emplace_back(std::move(layer));
         }
     }
@@ -46,7 +48,13 @@ public:
                 m_layers.begin(), m_layers.end(),
                 [&](auto& layer)
                 {
-                    return layer->id == GetTypeID<TLayer>();
+                    if(layer->id == GetTypeIDptr<TLayer>())
+                    {
+                        CORE_LOG_SUCCESS("Layer has been removed from layer stack");
+                        return true;
+                    }
+
+                    return false;
                 }
             )
         );

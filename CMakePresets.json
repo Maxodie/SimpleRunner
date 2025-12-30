@@ -11,8 +11,9 @@
             "displayName": "Debug",
             "description": "Debug build",
             "generator": "MinGW Makefiles",
-            "binaryDir": "${sourceDir}/build",
+            "binaryDir": "${sourceDir}/build/debug",
             "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "GIT_SUBMODULE": "ON",
                 "CMAKE_CXX_FLAGS": "-g -O0 -fstandalone-debug -Wno-format-security -Wno-deprecated-declarations -Wno-format-nonliteral",
@@ -28,8 +29,9 @@
             "displayName": "Release",
             "description": "Release build",
             "generator": "MinGW Makefiles",
-            "binaryDir": "${sourceDir}/build",
+            "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "release",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "GIT_SUBMODULE": "ON",
                 "CMAKE_CXX_FLAGS": "-O3",

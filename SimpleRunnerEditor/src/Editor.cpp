@@ -1,7 +1,10 @@
+#include "Log/Log.hpp"
 #include "SimpleRunner.hpp"
 
 class EditorLayer : public SR::Layer
 {
+public:
+
     virtual void OnEvent(SR::Event& event) override
     {
 
@@ -17,6 +20,7 @@ class EditorLayer : public SR::Layer
         SR::Renderer2D::Begin();
         SR::Renderer2D::DrawQuad(glm::vec2(0, 0), glm::vec2(1, 1));
         SR::Renderer2D::End();
+        CORE_LOG_SUCCESS("Render update finished");
     }
 };
 

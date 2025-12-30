@@ -2,14 +2,14 @@
 
 ## Dependencies
 project submodules :
-- NVRHI
 - GLFW
 - GLM
-- STB
 - ImGui
+- NVRHI
+- STB
 
 project package dependencies :
-- VulkanSDK (>= 1.4)
+- VulkanSDK (>= 1.4), shaderc_combined debug symbols required for debug build
 
 ## Build
 cmake build options : `GIT_SUBMODULE` `CMAKE_EXPORT_COMPILE_COMMANDS` `COMPILE_CONFIG_BUILD`
@@ -27,8 +27,6 @@ git submodule update --init --recursive
 
 build editor exemple
 ```
-mkdir build
-
 cmake --preset=debug
 mingw32-make -C ./build -j8
 ```

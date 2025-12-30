@@ -7,7 +7,7 @@ namespace SR
 class GraphicsPipeline
 {
 public:
-    void Create(RendererContext& context);
+    bool Create(RendererContext& context);
     void Destroy(RendererContext& context);
 
     SR_INLINE GraphicsPipelineData& GetData()

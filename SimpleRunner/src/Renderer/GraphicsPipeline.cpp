@@ -1,27 +1,55 @@
 #include "Renderer/GraphicsPipeline.hpp"
 #include "Renderer/Vertex.hpp"
+#include <shaderc/shaderc.hpp>
 
 namespace SR
 {
 
-void GraphicsPipeline::Create(RendererContext& context)
+#define SR_CHECK_SHADER(shader, type, content) if(shader.GetCompilationStatus() != shaderc_compilation_status_success)\
+{\
+    CORE_LOG_ERROR("failed to compile shaders %s code: %d, error %s, content: %s",\
+                   type, vertexResult.GetCompilationStatus(), vertexResult.GetErrorMessage().c_str(), content);\
+    return false;\
+}
+
+bool GraphicsPipeline::Create(RendererContext& context)
 {
+
     // Assume the shaders are included as C headers; they could just as well be loaded from files.
     const char g_VertexShader[] =
-        "#version 450"
-        "layout (location = 0) in vec3 iPosition;"
-        "layout (location = 1) in vec2 iTexCoord;"
-        "void main()"
-        "{ gl_Position = iPosition; }";
+        "#version 450\n"
+        "layout (location = 0) in vec3 iPosition;\n"
+        "layout (location = 1) in vec2 iTexCoord;\n"
+        "void main()\n"
+        "{ gl_Position = vec4(iPosition, 0);\n"
+        " }";
     const char g_PixelShader[] =
-        "#version 450"
-        "layout (location = 0) out vec4 outColor;"
-        "void main()"
-        "{ outColor = vec4(1, 0, 0, 1); }";
+        "#version 450\n"
+        "layout (location = 0) out vec4 outColor;\n"
+        "void main()\n"
+        "{ outColor = vec4(1, 0, 0, 1); }\n";
 
-    m_data.VertexShader = context.DeviceHandle->createShader(
+    shaderc::Compiler compiler;
+    shaderc::SpvCompilationResult vertexResult = compiler.CompileGlslToSpv(
+        g_VertexShader, sizeof(g_VertexShader)-1,
+        shaderc_shader_kind::shaderc_glsl_vertex_shader,
+        "vertex",
+        shaderc::CompileOptions()
+    );
+
+    shaderc::SpvCompilationResult fragmentResult = compiler.CompileGlslToSpv(
+        g_PixelShader, sizeof(g_PixelShader)-1,
+        shaderc_shader_kind::shaderc_glsl_fragment_shader,
+        "fragment",
+        shaderc::CompileOptions()
+    );
+
+    SR_CHECK_SHADER(vertexResult, "vertex", g_VertexShader)
+    SR_CHECK_SHADER(fragmentResult, "fragment", g_PixelShader)
+
+    m_data.VertexShader = context.GetHandle()->createShader(
         nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Vertex),
-        g_VertexShader, sizeof(g_VertexShader)
+        vertexResult.cbegin(), (vertexResult.cend() - vertexResult.cbegin()) * sizeof(uint32_t)
     );
 
     nvrhi::VertexAttributeDesc attributes[] = {
@@ -37,17 +65,16 @@ void GraphicsPipeline::Create(RendererContext& context)
             .setElementStride(sizeof(Vertex)),
     };
 
-    m_data.InputLayoutHandle = context.DeviceHandle->createInputLayout(
+    m_data.InputLayoutHandle = context.GetHandle()->createInputLayout(
         attributes, uint32_t(std::size(attributes)), m_data.VertexShader
     );
 
-    m_data.FragmentShader = context.DeviceHandle->createShader(
+    m_data.FragmentShader = context.GetHandle()->createShader(
         nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Pixel),
-        g_PixelShader, sizeof(g_PixelShader)
+        fragmentResult.cbegin(), (fragmentResult.cend() - fragmentResult.cbegin()) * sizeof(uint32_t)
     );
 
     auto framebufferInfo = context.Framebuffer->getFramebufferInfo();
-    framebufferInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM);
 
     //UNIFORM LAYOUT DESC
     // auto layoutDesc = nvrhi::BindingLayoutDesc()
@@ -59,27 +86,28 @@ void GraphicsPipeline::Create(RendererContext& context)
     auto pipelineDesc = nvrhi::GraphicsPipelineDesc()
         .setInputLayout(m_data.InputLayoutHandle)
         .setVertexShader(m_data.VertexShader)
-        .setPixelShader(m_data.FragmentShader);
+        .setPixelShader(m_data.FragmentShader)
+        .setRenderState(nvrhi::RenderState().setDepthStencilState(
+                nvrhi::DepthStencilState()
+                .disableDepthTest()
+                .disableDepthWrite()
+                .disableStencil()));
         // .addBindingLayout(bindingLayout);
 
-    m_data.GraphicsPipeline = context.DeviceHandle->createGraphicsPipeline(pipelineDesc, framebufferInfo);
-
-    //UNIFORM LAYOUT DESC BINDING HANDLE
-    // Note: the binding set must include all bindings declared in the layout, and nothing else.
-    // This condition is tested by the validation layer.
-    // The order of items in the binding set doesn't matter.
-    // auto bindingSetDesc = nvrhi::BindingSetDesc()
-    //     .addItem(nvrhi::BindingSetItem::Texture_SRV(0, m_data.GeometryTexture.GetHandle()))
-    //     .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, m_data.ConstantBuffer.GetHandle()));
-    //
-    // nvrhi::BindingSetHandle bindingSet = nvrhiDevice->createBindingSet(bindingSetDesc, bindingLayout);\
+    m_data.GraphicsPipeline = context.GetHandle()->createGraphicsPipeline(pipelineDesc, framebufferInfo);
+    if(!m_data.GraphicsPipeline)
+    {
+        return false;
+    }
 
 
     CORE_LOG_SUCCESS("Vulkan Graphics pipeline created");
+    return true;
 }
 
 void GraphicsPipeline::Destroy(RendererContext& context)
 {
+    m_data.GraphicsPipeline = nullptr;
     m_data.FragmentShader = nullptr;
     m_data.InputLayoutHandle = nullptr;
     m_data.VertexShader = nullptr;
