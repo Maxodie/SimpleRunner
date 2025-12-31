@@ -15,6 +15,7 @@ public:
     void ShutdownSwapChainSupportData();
 
     bool BeginFrame(CommandList& commandList, RendererContext& context);
+    void EndFrame(RendererContext& context);
     bool Present(RendererContext& context);
 
     SR_INLINE SwapChainData& GetData()

@@ -1,12 +1,14 @@
 #pragma once
+#include <glm/glm.hpp>
 
 namespace SR
 {
 
 struct Vertex
 {
-    float position[3];
-    float texCoord[2];
+    glm::vec3 position;
+    glm::vec2 texCoord;
+    glm::vec4 color;
 };
 
 }

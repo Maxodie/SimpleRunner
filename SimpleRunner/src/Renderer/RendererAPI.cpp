@@ -2,6 +2,7 @@
 #include "Core/Application.hpp"
 #include "Core/Core.hpp"
 #include "Log/Log.hpp"
+#include "nvrhi/nvrhi.h"
 #include <vulkan/vulkan_core.h>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -184,16 +185,22 @@ void RendererAPI::Shutdown()
 
 void RendererAPI::BeginFrame(CommandList& commandList, const nvrhi::Color& clearColor)
 {
-    commandList.GetHandle()->open();
-
     if(!s_swapChain.BeginFrame(commandList, s_context))
     {
         CORE_LOG_ERROR("vulkan renderer failed to begin frame");
     }
 
+    commandList.GetHandle()->open();
     nvrhi::utils::ClearColorAttachment(
-        commandList.GetHandle(), s_context.Framebuffer, 0, clearColor
+        commandList.GetHandle(), s_context.Framebuffers[s_swapChain.GetData().CurrentSwapChainImageId], 0, clearColor
     );
+}
+
+void RendererAPI::EndFrame(CommandList& commandList)
+{
+    commandList.GetHandle()->close();
+    ExecuteCommandList(commandList);
+    s_swapChain.EndFrame(s_context);
 }
 
 void RendererAPI::Present()
@@ -645,20 +652,18 @@ void RendererAPI::CreateFramebuffer()
 {
     SwapChainData& data = s_swapChain.GetData();
 
-    nvrhi::FramebufferDesc framebufferDesc = nvrhi::FramebufferDesc();
     for(const auto& texture : data.Textures)
     {
-        framebufferDesc.addColorAttachment(texture); // you can specify a particular subresource if necessary
+        nvrhi::FramebufferDesc framebufferDesc = nvrhi::FramebufferDesc()
+            .addColorAttachment(texture);
+        s_context.Framebuffers.push_back(s_context.GetHandle()->createFramebuffer(framebufferDesc));
     }
 
-    s_context.Framebuffer = s_context.GetHandle()->createFramebuffer(framebufferDesc);
-    auto framebufferInfo = s_context.Framebuffer->getFramebufferInfo();
-    framebufferInfo.addColorFormat(nvrhi::Format::RGBA8_UNORM);
 }
 
 void RendererAPI::DestroyFrameBuffer()
 {
-    s_context.Framebuffer = nullptr;
+    s_context.Framebuffers.clear();
 }
 
 }

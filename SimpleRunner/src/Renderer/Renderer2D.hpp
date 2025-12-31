@@ -11,15 +11,20 @@ public:
     struct Data
     {
         VertexBuffer QuadVertexBuffer;
+        IndexBuffer QuadIndexBuffer;
         CommandList CommandList;
 
-        static constexpr Vertex g_Vertices[] =
+        static constexpr uint32_t Indices[] =
             {
-                //  position          texCoord
-                { { -1.f, 0.f, 0.f }, { -1.f, 0.f } },
-                { { 1.f, 0.f, 0.f }, { 1.f, 0.f } },
-                { { 0.f, 1.f, 0.f }, { 0.f, 1.f } },
-                // and so on...
+                0, 1, 2, 2, 3, 0
+            };
+        static constexpr Vertex Vertices[] =
+            {
+                //  position          texCoord         color
+                { { -0.5f, 0.5f, 0.f }, { 0.f, 0.f }, {1.f, 0, 0, 1.f} },
+                { { 0.5f, 0.5f, 0.f }, { 1.f, 0.f }, {0.f, 1.0f, 0, 1.f} },
+                { { 0.5f, -0.5f, 0.f }, { 1.f, 1.f }, {0.f, 0, 1.0f, 1.f} },
+                { { -0.5f, -0.5f, 0.f }, { 0.f, 1.f }, {1.0f, 1.0f, 1.0f, 1.f} },
             };
     };
 

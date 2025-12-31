@@ -1,5 +1,6 @@
 #include "Renderer/SwapChain.hpp"
 #include "Core/Application.hpp"
+#include "Log/Log.hpp"
 
 namespace SR
 {
@@ -30,6 +31,13 @@ void SwapChain::Init(RendererContext& context)
 
 void SwapChain::Shutdown(RendererContext& context)
 {
+    while(!m_data.FramesInFlight.empty())
+    {
+        m_data.FramesInFlight.pop();
+    }
+
+    m_data.QueryPool.clear();
+
     Destroy(context);
     DestroySemaphores(context);
     ShutdownSwapChainSupportData();
@@ -76,11 +84,12 @@ bool SwapChain::BeginFrame(CommandList& commandList, RendererContext& context)
             (std::numeric_limits<uint64_t>::max)(), // timeout
             semaphore,
             vk::Fence(),
-            &m_data.CurrentSwapChainId);
+            &m_data.CurrentSwapChainImageId);
 
         if ((result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) && attempt < maxAttempts)
         {
             auto surfaceCaps = context.PhysicalDevice.getSurfaceCapabilitiesKHR(context.Surface);
+            CORE_LOG_WARNING("Failed to render this frame: %d", result);
 
             m_data.Width = surfaceCaps.currentExtent.width;
             m_data.Height = surfaceCaps.currentExtent.height;
@@ -91,7 +100,7 @@ bool SwapChain::BeginFrame(CommandList& commandList, RendererContext& context)
             break;
     }
 
-    m_data.CurrentFrame = (m_data.CurrentFrame + 1) % m_data.AcquireSemaphores.size();
+    m_data.CurrentFrame = (m_data.CurrentFrame + 1) % m_data.MaxFramesInFlight;
 
     if (result == vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR) // Suboptimal is considered a success
     {
@@ -103,22 +112,26 @@ bool SwapChain::BeginFrame(CommandList& commandList, RendererContext& context)
     return false;
 }
 
-bool SwapChain::Present(RendererContext& context)
+void SwapChain::EndFrame(RendererContext& context)
 {
-    const auto& semaphore = m_data.PresentSemaphores[m_data.CurrentSwapChainId];
+    const auto& semaphore = m_data.PresentSemaphores[m_data.CurrentSwapChainImageId];
 
     context.GetVulkanHandle()->queueSignalSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
 
     // NVRHI buffers the semaphores and signals them when something is submitted to a queue.
     // Call 'executeCommandLists' with no command lists to actually signal the semaphore.
+    // equivalent ot the barrier
     context.GetVulkanHandle()->executeCommandLists(nullptr, 0);
+}
 
+bool SwapChain::Present(RendererContext& context)
+{
     vk::PresentInfoKHR info = vk::PresentInfoKHR()
-                                .setWaitSemaphoreCount(1)
-                                .setPWaitSemaphores(&semaphore)
-                                .setSwapchainCount(1)
-                                .setPSwapchains(&m_data.SwapChain)
-                                .setPImageIndices(&m_data.CurrentSwapChainId);
+        .setWaitSemaphoreCount(1)
+        .setPWaitSemaphores(&m_data.PresentSemaphores[m_data.CurrentSwapChainImageId])
+        .setSwapchainCount(1)
+        .setPSwapchains(&m_data.SwapChain)
+        .setPImageIndices(&m_data.CurrentSwapChainImageId);
 
     const vk::Result res = context.PresentQueue.presentKHR(&info);
     if (!(res == vk::Result::eSuccess || res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR))
@@ -127,15 +140,16 @@ bool SwapChain::Present(RendererContext& context)
     }
 
 #ifndef _WIN32
-    if (m_DeviceParams.vsyncEnabled || m_DeviceParams.enableDebugRuntime)
-    {
+    // if (s_context.VsyncEnabled || s_context.EnableDebugRuntime)
+    // {
         // according to vulkan-tutorial.com, "the validation layer implementation expects
         // the application to explicitly synchronize with the GPU"
-        m_PresentQueue.waitIdle();
-    }
+        // context.PresentQueue.waitIdle();
+    // }
 #endif
 
-    while (m_data.FramesInFlight.size() >= m_data.MaxFramesInFlight)
+    bool shouldWait = false;
+    while (m_data.FramesInFlight.size() >= m_data.MaxFramesInFlight-1)
     {
         auto query = m_data.FramesInFlight.front();
         m_data.FramesInFlight.pop();
@@ -159,12 +173,16 @@ bool SwapChain::Present(RendererContext& context)
     context.GetHandle()->resetEventQuery(query);
     context.GetHandle()->setEventQuery(query, nvrhi::CommandQueue::Graphics);
     m_data.FramesInFlight.push(query);
+
     return true;
 }
 
 void SwapChain::Create(RendererContext& context)
 {
     CORE_ASSERT(!m_data.SwapChain, "Trying to create a swapChain before destroying the current one");
+
+    m_data.ImageExtent.setWidth(m_data.Width);
+    m_data.ImageExtent.setHeight(m_data.Height);
 
     vk::SwapchainCreateInfoKHR createInfo{};
     createInfo.surface = context.Surface;
@@ -215,7 +233,7 @@ void SwapChain::Create(RendererContext& context)
         m_data.Textures[i] = context.GetHandle()->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(images[i]), textureDesc);
     }
 
-    m_data.CurrentSwapChainId = 0;
+    m_data.CurrentSwapChainImageId = 0;
 
     CORE_LOG_SUCCESS("Vulkan Swapchain created");
 }
@@ -240,14 +258,17 @@ void SwapChain::Destroy(RendererContext& context)
 
 void SwapChain::CreateSemaphores(RendererContext& context)
 {
-    const uint32_t presentSemaphoreCount = m_data.ImageCount;
+    const uint32_t presentSemaphoreCount = m_data.Textures.size();
     m_data.PresentSemaphores.reserve(presentSemaphoreCount);
     for(uint32_t i = 0; i < presentSemaphoreCount; ++i)
     {
         m_data.PresentSemaphores.push_back(context.Device.createSemaphore(vk::SemaphoreCreateInfo()));
     }
 
-    const uint32_t acquireSemaphoreCount = m_data.MaxFramesInFlight;
+    const uint32_t acquireSemaphoreCount = (std::max)(
+        static_cast<size_t>(m_data.MaxFramesInFlight),
+        m_data.Textures.size()
+    );
     for(uint32_t i = 0; i < acquireSemaphoreCount; ++i)
     {
         m_data.AcquireSemaphores.push_back(context.Device.createSemaphore(vk::SemaphoreCreateInfo()));
@@ -261,6 +282,7 @@ void SwapChain::DestroySemaphores(RendererContext& context)
         if(semaphore)
         {
             context.Device.destroySemaphore(semaphore);
+            semaphore = vk::Semaphore();
         }
     }
     m_data.AcquireSemaphores.clear();
@@ -270,6 +292,7 @@ void SwapChain::DestroySemaphores(RendererContext& context)
         if(semaphore)
         {
             context.Device.destroySemaphore(semaphore);
+            semaphore = vk::Semaphore();
         }
     }
     m_data.PresentSemaphores.clear();

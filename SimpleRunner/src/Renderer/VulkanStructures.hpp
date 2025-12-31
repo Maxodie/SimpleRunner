@@ -28,7 +28,7 @@ namespace SR
         vk::CompositeAlphaFlagBitsKHR AlphaFlagBitsKHR = vk::CompositeAlphaFlagBitsKHR::eOpaque;
 
         vk::SwapchainKHR SwapChain = nullptr;
-        uint32_t CurrentSwapChainId;
+        uint32_t CurrentSwapChainImageId = 0;
 
         vk::ImageUsageFlags ImageUsage = vk::ImageUsageFlags::BitsType::eTransferDst | vk::ImageUsageFlags::BitsType::eColorAttachment | vk::ImageUsageFlags::BitsType::eSampled;
         uint32_t ImageCount;
@@ -42,7 +42,7 @@ namespace SR
         std::vector<vk::Semaphore> PresentSemaphores;
         std::vector<vk::Semaphore> AcquireSemaphores;
 
-        uint32_t CurrentFrame;
+        uint32_t CurrentFrame = 0;
         uint32_t MaxFramesInFlight;
 
         std::queue<nvrhi::EventQueryHandle> FramesInFlight;
@@ -99,6 +99,6 @@ namespace SR
         vk::Queue GraphicsQueue = VK_NULL_HANDLE;
         vk::Queue PresentQueue = VK_NULL_HANDLE;
 
-        nvrhi::FramebufferHandle Framebuffer;
+        std::vector<nvrhi::FramebufferHandle> Framebuffers;
     };
 }

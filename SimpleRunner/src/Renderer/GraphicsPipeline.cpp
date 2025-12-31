@@ -8,7 +8,7 @@ namespace SR
 #define SR_CHECK_SHADER(shader, type, content) if(shader.GetCompilationStatus() != shaderc_compilation_status_success)\
 {\
     CORE_LOG_ERROR("failed to compile shaders %s code: %d, error %s, content: %s",\
-                   type, vertexResult.GetCompilationStatus(), vertexResult.GetErrorMessage().c_str(), content);\
+                   type, shader.GetCompilationStatus(), shader.GetErrorMessage().c_str(), content);\
     return false;\
 }
 
@@ -20,14 +20,18 @@ bool GraphicsPipeline::Create(RendererContext& context)
         "#version 450\n"
         "layout (location = 0) in vec3 iPosition;\n"
         "layout (location = 1) in vec2 iTexCoord;\n"
+        "layout (location = 2) in vec4 iColor;\n"
+        "layout (location = 0) out vec4 oiColor;\n"
         "void main()\n"
-        "{ gl_Position = vec4(iPosition, 0);\n"
+        "{ gl_Position = vec4(iPosition, 1);\n"
+        " oiColor = iColor;\n"
         " }";
     const char g_PixelShader[] =
         "#version 450\n"
+        "layout (location = 0) in vec4 oiColor;\n"
         "layout (location = 0) out vec4 outColor;\n"
         "void main()\n"
-        "{ outColor = vec4(1, 0, 0, 1); }\n";
+        "{ outColor = oiColor; }\n";
 
     shaderc::Compiler compiler;
     shaderc::SpvCompilationResult vertexResult = compiler.CompileGlslToSpv(
@@ -54,14 +58,19 @@ bool GraphicsPipeline::Create(RendererContext& context)
 
     nvrhi::VertexAttributeDesc attributes[] = {
         nvrhi::VertexAttributeDesc()
-            .setName("POSITION")
+            .setName("iPosition")
             .setFormat(nvrhi::Format::RGB32_FLOAT)
             .setOffset(offsetof(Vertex, position))
             .setElementStride(sizeof(Vertex)),
         nvrhi::VertexAttributeDesc()
-            .setName("TEXCOORD")
+            .setName("iTexCoord")
             .setFormat(nvrhi::Format::RG32_FLOAT)
             .setOffset(offsetof(Vertex, texCoord))
+            .setElementStride(sizeof(Vertex)),
+        nvrhi::VertexAttributeDesc()
+            .setName("iColor")
+            .setFormat(nvrhi::Format::RGBA32_FLOAT)
+            .setOffset(offsetof(Vertex, color))
             .setElementStride(sizeof(Vertex)),
     };
 
@@ -74,8 +83,9 @@ bool GraphicsPipeline::Create(RendererContext& context)
         fragmentResult.cbegin(), (fragmentResult.cend() - fragmentResult.cbegin()) * sizeof(uint32_t)
     );
 
-    auto framebufferInfo = context.Framebuffer->getFramebufferInfo();
+    CORE_ASSERT(!context.Framebuffers.empty(), "no frame buffer available for the graphics pipeline creation");
 
+    auto framebufferInfo = context.Framebuffers[0]->getFramebufferInfo();
     //UNIFORM LAYOUT DESC
     // auto layoutDesc = nvrhi::BindingLayoutDesc()
     //     .setVisibility(nvrhi::ShaderType::All)
@@ -91,7 +101,11 @@ bool GraphicsPipeline::Create(RendererContext& context)
                 nvrhi::DepthStencilState()
                 .disableDepthTest()
                 .disableDepthWrite()
-                .disableStencil()));
+                .disableStencil()
+            )
+            .setRasterState(nvrhi::RasterState().setFrontCounterClockwise(false)
+                .setCullBack())
+        );
         // .addBindingLayout(bindingLayout);
 
     m_data.GraphicsPipeline = context.GetHandle()->createGraphicsPipeline(pipelineDesc, framebufferInfo);

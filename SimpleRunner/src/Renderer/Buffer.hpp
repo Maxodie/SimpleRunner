@@ -10,7 +10,6 @@ struct RendererContext;
 class RendererBuffer
 {
 public:
-    virtual void Create(RendererContext& context, size_t size) = 0;
     SR_INLINE virtual void Destroy()
     {
         m_bufferHandle = nullptr;
@@ -29,13 +28,13 @@ protected:
 class ConstantBuffer : public RendererBuffer
 {
 public:
-    virtual void Create(RendererContext& context, size_t size = sizeof(float) * 16) override;
+    void Create(RendererContext& context, size_t size = sizeof(float) * 16);
 };
 
 class VertexBuffer : public RendererBuffer
 {
 public:
-    virtual void Create(RendererContext& context, size_t size = sizeof(Vertex)) override;
+    virtual void Create(RendererContext& context, size_t size);
 
     SR_INLINE nvrhi::VertexBufferBinding& GetBinding()
     {
@@ -44,6 +43,26 @@ public:
 
 private:
     nvrhi::VertexBufferBinding m_vertexBufferBinding;
+};
+
+class IndexBuffer : public RendererBuffer
+{
+public:
+    void Create(RendererContext& context, size_t elementSize, size_t count);
+
+    SR_INLINE nvrhi::IndexBufferBinding& GetBinding()
+    {
+        return m_indexBufferBinding;
+    }
+
+    SR_INLINE size_t GetElementSize()
+    {
+        return m_elementSize;
+    }
+
+private:
+    nvrhi::IndexBufferBinding m_indexBufferBinding;
+    size_t m_elementSize;
 };
 
 }

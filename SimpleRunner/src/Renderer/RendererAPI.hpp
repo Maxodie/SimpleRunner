@@ -4,6 +4,7 @@
 #include "Renderer/GraphicsPipeline.hpp"
 #include "Renderer/Buffer.hpp"
 #include "Renderer/CommandList.hpp"
+#include "nvrhi/nvrhi.h"
 
 namespace SR
 {
@@ -25,25 +26,34 @@ public:
         return s_context;
     }
 
-    SR_INLINE static void SetGraphicsState(CommandList& commandList, VertexBuffer& vertexBuffer)
+    SR_INLINE static void SetGraphicsState(CommandList& commandList, VertexBuffer& vertexBuffer, IndexBuffer& indexBuffer)
     {
-        nvrhi::VertexBufferBinding vertexBufferBinding;
-        vertexBufferBinding.setBuffer(vertexBuffer.GetHandle());
-        vertexBufferBinding.setSlot(0);
-        vertexBufferBinding.setOffset(0);
+        nvrhi::VertexBufferBinding vertexBufferBinding = nvrhi::VertexBufferBinding()
+            .setBuffer(vertexBuffer.GetHandle())
+            .setSlot(0)
+            .setOffset(0);
+
+        nvrhi::IndexBufferBinding indexBufferBinding = nvrhi::IndexBufferBinding()
+            .setBuffer(indexBuffer.GetHandle())
+            .setFormat(indexBuffer.GetElementSize() == sizeof(uint32_t) ? nvrhi::Format::R32_UINT : nvrhi::Format::R16_UINT)
+            .setOffset(0);
+
+        auto& framebuffer = GetContext().Framebuffers[s_swapChain.GetData().CurrentSwapChainImageId];
 
         auto graphicsState = nvrhi::GraphicsState()
             .setPipeline(s_graphicsPipeline.GetData().GraphicsPipeline)
-            .setFramebuffer(GetContext().Framebuffer)
+            .setFramebuffer(framebuffer)
             .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(
                 nvrhi::Viewport(s_swapChain.GetData().Width, s_swapChain.GetData().Height))
             )
             // .addBindingSet(bindingSet)
-            .addVertexBuffer(vertexBufferBinding);
+            .addVertexBuffer(vertexBufferBinding)
+            .setIndexBuffer(indexBufferBinding);
         commandList.GetHandle()->setGraphicsState(graphicsState);
     }
 
     static void BeginFrame(CommandList& commandList, const nvrhi::Color& clearColor);
+    static void EndFrame(CommandList& commandList);
     static void Present();
 
 private:
