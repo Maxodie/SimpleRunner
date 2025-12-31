@@ -19,6 +19,7 @@ namespace SR
     struct SwapChainData
     {
         std::vector<nvrhi::TextureHandle> Textures;
+        std::vector<nvrhi::FramebufferHandle> Framebuffers;
 
         vk::Format ImageFormat;
         vk::PresentModeKHR PresentMode;
@@ -98,7 +99,5 @@ namespace SR
         vk::Device Device = VK_NULL_HANDLE;
         vk::Queue GraphicsQueue = VK_NULL_HANDLE;
         vk::Queue PresentQueue = VK_NULL_HANDLE;
-
-        std::vector<nvrhi::FramebufferHandle> Framebuffers;
     };
 }

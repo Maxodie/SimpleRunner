@@ -12,7 +12,7 @@ namespace SR
     return false;\
 }
 
-bool GraphicsPipeline::Create(RendererContext& context)
+bool GraphicsPipeline::Create(RendererContext& context, const nvrhi::FramebufferInfo& info)
 {
 
     // Assume the shaders are included as C headers; they could just as well be loaded from files.
@@ -83,9 +83,6 @@ bool GraphicsPipeline::Create(RendererContext& context)
         fragmentResult.cbegin(), (fragmentResult.cend() - fragmentResult.cbegin()) * sizeof(uint32_t)
     );
 
-    CORE_ASSERT(!context.Framebuffers.empty(), "no frame buffer available for the graphics pipeline creation");
-
-    auto framebufferInfo = context.Framebuffers[0]->getFramebufferInfo();
     //UNIFORM LAYOUT DESC
     // auto layoutDesc = nvrhi::BindingLayoutDesc()
     //     .setVisibility(nvrhi::ShaderType::All)
@@ -108,7 +105,7 @@ bool GraphicsPipeline::Create(RendererContext& context)
         );
         // .addBindingLayout(bindingLayout);
 
-    m_data.GraphicsPipeline = context.GetHandle()->createGraphicsPipeline(pipelineDesc, framebufferInfo);
+    m_data.GraphicsPipeline = context.GetHandle()->createGraphicsPipeline(pipelineDesc, info);
     if(!m_data.GraphicsPipeline)
     {
         return false;

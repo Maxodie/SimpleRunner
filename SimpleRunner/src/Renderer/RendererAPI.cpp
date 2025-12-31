@@ -22,7 +22,7 @@ GraphicsPipeline RendererAPI::s_graphicsPipeline;
 
 void RendererAPI::VulkanInitValidationLayer()
 {
-#ifdef SR_EDITOR
+#ifdef SR_DEBUG
     s_context.ValidationLayers.emplace_back("VK_LAYER_KHRONOS_validation");
 	s_context.EnableValidationLayers = true;
 #else
@@ -148,9 +148,10 @@ void RendererAPI::Init()
     s_context.IsContextDeviceInitialized = true;
 
     s_swapChain.Init(s_context);
-    CreateFramebuffer();
 
-    bool result = s_graphicsPipeline.Create(s_context);
+    CORE_ASSERT(!s_swapChain.GetData().Framebuffers.empty(), "no frame buffer available for the graphics pipeline creation");
+
+    bool result = s_graphicsPipeline.Create(s_context, s_swapChain.GetData().Framebuffers[0]->getFramebufferInfo());
     CORE_ASSERT(result, "fail to create default graphics pipeline");
 
     CORE_LOG_SUCCESS("NVRHI vulkan initialized");
@@ -160,7 +161,6 @@ void RendererAPI::Shutdown()
 {
     s_graphicsPipeline.Destroy(s_context);
 
-    DestroyFrameBuffer();
     s_swapChain.Shutdown(s_context);
 
     s_context.SetValidationHandle(nullptr);
@@ -192,7 +192,7 @@ void RendererAPI::BeginFrame(CommandList& commandList, const nvrhi::Color& clear
 
     commandList.GetHandle()->open();
     nvrhi::utils::ClearColorAttachment(
-        commandList.GetHandle(), s_context.Framebuffers[s_swapChain.GetData().CurrentSwapChainImageId], 0, clearColor
+        commandList.GetHandle(), s_swapChain.GetFrameBufferInFlight(), 0, clearColor
     );
 }
 
@@ -646,24 +646,6 @@ void RendererAPI::GLFWSetExtension(vk::InstanceCreateInfo* createInfo, std::vect
 
 	createInfo->enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo->ppEnabledExtensionNames = extensions.data();
-}
-
-void RendererAPI::CreateFramebuffer()
-{
-    SwapChainData& data = s_swapChain.GetData();
-
-    for(const auto& texture : data.Textures)
-    {
-        nvrhi::FramebufferDesc framebufferDesc = nvrhi::FramebufferDesc()
-            .addColorAttachment(texture);
-        s_context.Framebuffers.push_back(s_context.GetHandle()->createFramebuffer(framebufferDesc));
-    }
-
-}
-
-void RendererAPI::DestroyFrameBuffer()
-{
-    s_context.Framebuffers.clear();
 }
 
 }

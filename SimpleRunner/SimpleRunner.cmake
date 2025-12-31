@@ -61,9 +61,12 @@ set_target_properties(SimpleRunner PROPERTIES
 
 message("==== Config compile definition : ${CONFIG_COMPILE_DEFINITION} ====")
 
-target_compile_definitions(SimpleRunner PRIVATE
+target_compile_definitions(SimpleRunner PUBLIC
     "$<$<CONFIG:debug>:SR_LOGGER>"
     "$<$<CONFIG:debug>:SR_ASSERT>"
+
+    "$<$<CONFIG:debug>:SR_DEBUG>"
+    "$<$<CONFIG:release>:SR_RELEASE>"
 
     ${CONFIG_COMPILE_DEFINITION}
 )

@@ -18,12 +18,5 @@ if(CONFIG_COMPILE_DEFINITION STREQUAL SR_EDITOR)
         LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR}/SimpleRunnerEditor
         RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR}/SimpleRunnerEditor
     )
-
-    target_compile_definitions(SimpleRunnerEditor PRIVATE
-        "$<$<CONFIG:debug>:SR_LOGGER>"
-        "$<$<CONFIG:debug>:SR_ASSERT>"
-
-        ${CONFIG_COMPILE_DEFINITION}
-    )
 endif()
 

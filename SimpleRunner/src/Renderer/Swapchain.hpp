@@ -18,12 +18,17 @@ public:
     void EndFrame(RendererContext& context);
     bool Present(RendererContext& context);
 
+    SR_INLINE nvrhi::FramebufferHandle& GetFrameBufferInFlight()
+    {
+        return m_data.Framebuffers[m_data.CurrentSwapChainImageId];
+    }
+
     SR_INLINE SwapChainData& GetData()
     {
         return m_data;
     }
 
-    SR_INLINE void Recreate(RendererContext& context)
+    SR_INLINE void Resize(RendererContext& context)
     {
         Destroy(context);
         Create(context);
@@ -32,6 +37,9 @@ public:
 private:
     void Create(RendererContext& context);
     void Destroy(RendererContext& context);
+
+    void CreateFramebuffers(RendererContext& context);
+    void DestroyFramebuffers(RendererContext& context);
 
     void CreateSemaphores(RendererContext& context);
     void DestroySemaphores(RendererContext& context);

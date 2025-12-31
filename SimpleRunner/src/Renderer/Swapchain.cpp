@@ -27,6 +27,8 @@ void SwapChain::Init(RendererContext& context)
 
     Create(context);
     CreateSemaphores(context);
+
+    CreateFramebuffers(context);
 }
 
 void SwapChain::Shutdown(RendererContext& context)
@@ -37,6 +39,8 @@ void SwapChain::Shutdown(RendererContext& context)
     }
 
     m_data.QueryPool.clear();
+
+    DestroyFramebuffers(context);
 
     Destroy(context);
     DestroySemaphores(context);
@@ -89,12 +93,13 @@ bool SwapChain::BeginFrame(CommandList& commandList, RendererContext& context)
         if ((result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) && attempt < maxAttempts)
         {
             auto surfaceCaps = context.PhysicalDevice.getSurfaceCapabilitiesKHR(context.Surface);
-            CORE_LOG_WARNING("Failed to render this frame: %d", result);
 
             m_data.Width = surfaceCaps.currentExtent.width;
             m_data.Height = surfaceCaps.currentExtent.height;
 
-            Recreate(context);
+            DestroyFramebuffers(context);
+            Resize(context);
+            CreateFramebuffers(context);
         }
         else
             break;
@@ -254,6 +259,22 @@ void SwapChain::Destroy(RendererContext& context)
     m_data.Textures.clear();
 
     CORE_LOG_SUCCESS("Vulkan Swapchain destroyed");
+}
+
+void SwapChain::CreateFramebuffers(RendererContext& context)
+{
+    for(const auto& texture : m_data.Textures)
+    {
+        nvrhi::FramebufferDesc framebufferDesc = nvrhi::FramebufferDesc()
+            .addColorAttachment(texture);
+        m_data.Framebuffers.push_back(context.GetHandle()->createFramebuffer(framebufferDesc));
+    }
+
+}
+
+void SwapChain::DestroyFramebuffers(RendererContext& context)
+{
+    m_data.Framebuffers.clear();
 }
 
 void SwapChain::CreateSemaphores(RendererContext& context)

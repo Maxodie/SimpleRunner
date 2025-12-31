@@ -38,7 +38,7 @@ public:
             .setFormat(indexBuffer.GetElementSize() == sizeof(uint32_t) ? nvrhi::Format::R32_UINT : nvrhi::Format::R16_UINT)
             .setOffset(0);
 
-        auto& framebuffer = GetContext().Framebuffers[s_swapChain.GetData().CurrentSwapChainImageId];
+        auto& framebuffer = s_swapChain.GetFrameBufferInFlight();
 
         auto graphicsState = nvrhi::GraphicsState()
             .setPipeline(s_graphicsPipeline.GetData().GraphicsPipeline)
@@ -75,9 +75,6 @@ private:
     static void GLFWDestroySurface();
 
     static void GLFWSetExtension(vk::InstanceCreateInfo* createInfo, std::vector<const char*>& extensionList);
-
-    static void CreateFramebuffer();
-    static void DestroyFrameBuffer();
 
 private:
     static RendererContext s_context;
