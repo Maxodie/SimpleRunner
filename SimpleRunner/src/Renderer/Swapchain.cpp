@@ -1,6 +1,7 @@
 #include "Renderer/SwapChain.hpp"
 #include "Core/Application.hpp"
 #include "Log/Log.hpp"
+#include "vulkan/vulkan.hpp"
 
 namespace SR
 {
@@ -94,12 +95,7 @@ bool SwapChain::BeginFrame(CommandList& commandList, RendererContext& context)
         {
             auto surfaceCaps = context.PhysicalDevice.getSurfaceCapabilitiesKHR(context.Surface);
 
-            m_data.Width = surfaceCaps.currentExtent.width;
-            m_data.Height = surfaceCaps.currentExtent.height;
-
-            DestroyFramebuffers(context);
-            Resize(context);
-            CreateFramebuffers(context);
+            Resize(context, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height);
         }
         else
             break;

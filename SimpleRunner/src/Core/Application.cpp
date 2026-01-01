@@ -69,6 +69,7 @@ void Application::OnEvent(Event& event)
 {
     EventDispatcher dispatcher{event};
     dispatcher.Dispatch<WindowClosedEvent>(BIND_FUNCTION_1(Application::OnWindowClosedEvent));
+    dispatcher.Dispatch<WindowResizeEvent>(BIND_FUNCTION_1(Application::OnWindowResizedEvent));
 
     for(auto& layer : m_layerStack.GetStack())
     {
@@ -84,6 +85,15 @@ bool Application::OnWindowClosedEvent(const WindowClosedEvent& window)
     m_window = nullptr;
 
     Stop();
+    return true;
+}
+
+bool Application::OnWindowResizedEvent(const WindowResizeEvent& window)
+{
+    if(window.WindowData.Height != 0 && window.WindowData.Height != 0)
+    {
+    }
+
     return true;
 }
 

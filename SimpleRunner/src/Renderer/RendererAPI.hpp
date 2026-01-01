@@ -26,29 +26,33 @@ public:
         return s_context;
     }
 
-    SR_INLINE static void SetGraphicsState(CommandList& commandList, VertexBuffer& vertexBuffer, IndexBuffer& indexBuffer)
+    SR_INLINE static void CreateGraphicsPipeline(const ShaderLib& shaderLib, GraphicsPipeline& graphicsPipeline)
     {
-        nvrhi::VertexBufferBinding vertexBufferBinding = nvrhi::VertexBufferBinding()
-            .setBuffer(vertexBuffer.GetHandle())
-            .setSlot(0)
-            .setOffset(0);
+        CORE_ASSERT(!s_swapChain.GetData().Framebuffers.empty(), "no frame buffer available for the graphics pipeline creation");
 
-        nvrhi::IndexBufferBinding indexBufferBinding = nvrhi::IndexBufferBinding()
-            .setBuffer(indexBuffer.GetHandle())
-            .setFormat(indexBuffer.GetElementSize() == sizeof(uint32_t) ? nvrhi::Format::R32_UINT : nvrhi::Format::R16_UINT)
-            .setOffset(0);
+        bool result = graphicsPipeline.Create(s_context, shaderLib, s_swapChain.GetData().Framebuffers[0]->getFramebufferInfo());
 
+        CORE_ASSERT(result, "fail to create graphics pipeline");
+    }
+
+    SR_INLINE static void DestroyGraphicsPipeline(GraphicsPipeline& pipeline)
+    {
+        pipeline.Destroy(s_context);
+    }
+
+    SR_INLINE static void SetGraphicsState(CommandList& commandList, GraphicsPipeline& pipeline, VertexBuffer& vertexBuffer, IndexBuffer& indexBuffer)
+    {
         auto& framebuffer = s_swapChain.GetFrameBufferInFlight();
 
         auto graphicsState = nvrhi::GraphicsState()
-            .setPipeline(s_graphicsPipeline.GetData().GraphicsPipeline)
+            .setPipeline(pipeline.GetData().GraphicsPipeline)
             .setFramebuffer(framebuffer)
             .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(
                 nvrhi::Viewport(s_swapChain.GetData().Width, s_swapChain.GetData().Height))
             )
             // .addBindingSet(bindingSet)
-            .addVertexBuffer(vertexBufferBinding)
-            .setIndexBuffer(indexBufferBinding);
+            .addVertexBuffer(vertexBuffer.GetBinding())
+            .setIndexBuffer(indexBuffer.GetBinding());
         commandList.GetHandle()->setGraphicsState(graphicsState);
     }
 
@@ -79,7 +83,6 @@ private:
 private:
     static RendererContext s_context;
     static SwapChain s_swapChain;
-    static GraphicsPipeline s_graphicsPipeline;
 };
 
 }

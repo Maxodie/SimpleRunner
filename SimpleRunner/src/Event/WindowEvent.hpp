@@ -18,8 +18,11 @@ public:
 class WindowResizeEvent : public Event
 {
 public:
-    WindowResizeEvent() = default;
+    WindowResizeEvent(const Window::Data& windowData)
+        : WindowData(windowData) {};
     EVENT_CLASS_TYPE(ResizeWindow)
+
+    const Window::Data& WindowData;
 };
 
 class WindowMinimizedEvent : public Event

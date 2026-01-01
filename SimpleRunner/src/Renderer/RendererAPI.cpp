@@ -18,7 +18,6 @@ namespace SR
 
 RendererContext RendererAPI::s_context;
 SwapChain RendererAPI::s_swapChain;
-GraphicsPipeline RendererAPI::s_graphicsPipeline;
 
 void RendererAPI::VulkanInitValidationLayer()
 {
@@ -149,18 +148,11 @@ void RendererAPI::Init()
 
     s_swapChain.Init(s_context);
 
-    CORE_ASSERT(!s_swapChain.GetData().Framebuffers.empty(), "no frame buffer available for the graphics pipeline creation");
-
-    bool result = s_graphicsPipeline.Create(s_context, s_swapChain.GetData().Framebuffers[0]->getFramebufferInfo());
-    CORE_ASSERT(result, "fail to create default graphics pipeline");
-
     CORE_LOG_SUCCESS("NVRHI vulkan initialized");
 }
 
 void RendererAPI::Shutdown()
 {
-    s_graphicsPipeline.Destroy(s_context);
-
     s_swapChain.Shutdown(s_context);
 
     s_context.SetValidationHandle(nullptr);

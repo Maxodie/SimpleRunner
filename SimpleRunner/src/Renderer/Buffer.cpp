@@ -24,6 +24,11 @@ void VertexBuffer::Create(RendererContext& context, size_t size)
         .setDebugName("Vertex Buffer");
 
     m_bufferHandle = context.GetHandle()->createBuffer(vertexBufferDesc);
+
+    m_vertexBufferBinding = nvrhi::VertexBufferBinding()
+        .setBuffer(GetHandle())
+        .setSlot(0)
+        .setOffset(0);
 }
 
 void IndexBuffer::Create(RendererContext& context, size_t elementSize, size_t count)
@@ -36,6 +41,10 @@ void IndexBuffer::Create(RendererContext& context, size_t elementSize, size_t co
         .setDebugName("Index Buffer");
 
     m_bufferHandle = context.GetHandle()->createBuffer(indexBufferDesc);
+    m_indexBufferBinding = nvrhi::IndexBufferBinding()
+        .setBuffer(GetHandle())
+        .setFormat(GetElementSize() == sizeof(uint32_t) ? nvrhi::Format::R32_UINT : nvrhi::Format::R16_UINT)
+        .setOffset(0);
 }
 
 }

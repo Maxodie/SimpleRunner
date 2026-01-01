@@ -1,86 +1,31 @@
 #include "Renderer/GraphicsPipeline.hpp"
 #include "Renderer/Vertex.hpp"
-#include <shaderc/shaderc.hpp>
 
 namespace SR
 {
 
-#define SR_CHECK_SHADER(shader, type, content) if(shader.GetCompilationStatus() != shaderc_compilation_status_success)\
-{\
-    CORE_LOG_ERROR("failed to compile shaders %s code: %d, error %s, content: %s",\
-                   type, shader.GetCompilationStatus(), shader.GetErrorMessage().c_str(), content);\
-    return false;\
-}
-
-bool GraphicsPipeline::Create(RendererContext& context, const nvrhi::FramebufferInfo& info)
+bool GraphicsPipeline::Create(RendererContext& context, const ShaderLib& shaderLib, const nvrhi::FramebufferInfo& info)
 {
+    nvrhi::ShaderHandle vertexShaderHandle = nullptr;
 
-    // Assume the shaders are included as C headers; they could just as well be loaded from files.
-    const char g_VertexShader[] =
-        "#version 450\n"
-        "layout (location = 0) in vec3 iPosition;\n"
-        "layout (location = 1) in vec2 iTexCoord;\n"
-        "layout (location = 2) in vec4 iColor;\n"
-        "layout (location = 0) out vec4 oiColor;\n"
-        "void main()\n"
-        "{ gl_Position = vec4(iPosition, 1);\n"
-        " oiColor = iColor;\n"
-        " }";
-    const char g_PixelShader[] =
-        "#version 450\n"
-        "layout (location = 0) in vec4 oiColor;\n"
-        "layout (location = 0) out vec4 outColor;\n"
-        "void main()\n"
-        "{ outColor = oiColor; }\n";
-
-    shaderc::Compiler compiler;
-    shaderc::SpvCompilationResult vertexResult = compiler.CompileGlslToSpv(
-        g_VertexShader, sizeof(g_VertexShader)-1,
-        shaderc_shader_kind::shaderc_glsl_vertex_shader,
-        "vertex",
-        shaderc::CompileOptions()
-    );
-
-    shaderc::SpvCompilationResult fragmentResult = compiler.CompileGlslToSpv(
-        g_PixelShader, sizeof(g_PixelShader)-1,
-        shaderc_shader_kind::shaderc_glsl_fragment_shader,
-        "fragment",
-        shaderc::CompileOptions()
-    );
-
-    SR_CHECK_SHADER(vertexResult, "vertex", g_VertexShader)
-    SR_CHECK_SHADER(fragmentResult, "fragment", g_PixelShader)
-
-    m_data.VertexShader = context.GetHandle()->createShader(
-        nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Vertex),
-        vertexResult.cbegin(), (vertexResult.cend() - vertexResult.cbegin()) * sizeof(uint32_t)
-    );
-
-    nvrhi::VertexAttributeDesc attributes[] = {
-        nvrhi::VertexAttributeDesc()
-            .setName("iPosition")
-            .setFormat(nvrhi::Format::RGB32_FLOAT)
-            .setOffset(offsetof(Vertex, position))
-            .setElementStride(sizeof(Vertex)),
-        nvrhi::VertexAttributeDesc()
-            .setName("iTexCoord")
-            .setFormat(nvrhi::Format::RG32_FLOAT)
-            .setOffset(offsetof(Vertex, texCoord))
-            .setElementStride(sizeof(Vertex)),
-        nvrhi::VertexAttributeDesc()
-            .setName("iColor")
-            .setFormat(nvrhi::Format::RGBA32_FLOAT)
-            .setOffset(offsetof(Vertex, color))
-            .setElementStride(sizeof(Vertex)),
-    };
+    //according to createInputLayout only D3D11 should needs a vertexShader
+#ifdef SR_WITH_D3D11
+    const auto& vertexShader = std::find_if(
+            shaderLib.GetShaders().begin(), shaderLib.GetShaders().end(),
+            [](const ShaderLib::Shader& shader)
+            {
+                return shader.GetType() == ShaderType::VERTEX;
+            }
+        );
+    if(vertexShader != shaderLib.GetShaders().end())
+    {
+        vertexShaderHandle = vertexShader->GetHandle();
+    }
+#endif
 
     m_data.InputLayoutHandle = context.GetHandle()->createInputLayout(
-        attributes, uint32_t(std::size(attributes)), m_data.VertexShader
-    );
-
-    m_data.FragmentShader = context.GetHandle()->createShader(
-        nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Pixel),
-        fragmentResult.cbegin(), (fragmentResult.cend() - fragmentResult.cbegin()) * sizeof(uint32_t)
+        Vertex::GetAttributes().data(), uint32_t(std::size(Vertex::GetAttributes())),
+        vertexShaderHandle
     );
 
     //UNIFORM LAYOUT DESC
@@ -92,8 +37,7 @@ bool GraphicsPipeline::Create(RendererContext& context, const nvrhi::Framebuffer
 
     auto pipelineDesc = nvrhi::GraphicsPipelineDesc()
         .setInputLayout(m_data.InputLayoutHandle)
-        .setVertexShader(m_data.VertexShader)
-        .setPixelShader(m_data.FragmentShader)
+        // .addBindingLayout(bindingLayout);
         .setRenderState(nvrhi::RenderState().setDepthStencilState(
                 nvrhi::DepthStencilState()
                 .disableDepthTest()
@@ -103,7 +47,25 @@ bool GraphicsPipeline::Create(RendererContext& context, const nvrhi::Framebuffer
             .setRasterState(nvrhi::RasterState().setFrontCounterClockwise(false)
                 .setCullBack())
         );
-        // .addBindingLayout(bindingLayout);
+
+    for(const ShaderLib::Shader& shader : shaderLib.GetShaders())
+    {
+        if(shader.GetType() == ShaderType::VERTEX)
+        {
+            pipelineDesc.setVertexShader(shader.GetHandle());
+        }
+        else if(shader.GetType() == ShaderType::PIXEL)
+        {
+            pipelineDesc.setPixelShader(shader.GetHandle());
+        }
+        else
+        {
+            CORE_LOG_ERROR(
+                "Shader graphics does not handle shader type %zu at the moment. Shader will be ignored",
+                shader.GetType());
+        }
+
+    }
 
     m_data.GraphicsPipeline = context.GetHandle()->createGraphicsPipeline(pipelineDesc, info);
     if(!m_data.GraphicsPipeline)
@@ -119,9 +81,7 @@ bool GraphicsPipeline::Create(RendererContext& context, const nvrhi::Framebuffer
 void GraphicsPipeline::Destroy(RendererContext& context)
 {
     m_data.GraphicsPipeline = nullptr;
-    m_data.FragmentShader = nullptr;
     m_data.InputLayoutHandle = nullptr;
-    m_data.VertexShader = nullptr;
 
     CORE_LOG_SUCCESS("Vulkan Graphics pipeline destroyed");
 }

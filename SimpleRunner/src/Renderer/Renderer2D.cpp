@@ -1,7 +1,6 @@
 #include "Renderer/Renderer2D.hpp"
 #include "Renderer/RendererAPI.hpp"
 #include "nvrhi/nvrhi.h"
-#include "nvrhi/utils.h"
 
 namespace SR
 {
@@ -10,6 +9,17 @@ Renderer2D::Data Renderer2D::s_data;
 
 void Renderer2D::Init()
 {
+    Path vertexPath = "SimpleRunnerEditor/Assets/Shaders/VertexShader.glsl";
+    Path fragPath = "SimpleRunnerEditor/Assets/Shaders/FragmentShader.glsl";
+
+    bool result = s_data.DefaultShaderLib.AttachShader(vertexPath, ShaderType::VERTEX);
+    CORE_ASSERT(result, "failed to load default vertex shader");
+
+    result = s_data.DefaultShaderLib.AttachShader(fragPath, ShaderType::PIXEL);
+    CORE_ASSERT(result, "failed to load default vertex shader");
+
+    RendererAPI::CreateGraphicsPipeline(s_data.DefaultShaderLib, s_data.GraphicsPipeline);
+
     s_data.CommandList.Create(RendererAPI::GetContext());
 
     s_data.QuadVertexBuffer.Create(RendererAPI::GetContext(), sizeof(s_data.Vertices));
@@ -43,6 +53,10 @@ void Renderer2D::Shutdown()
     s_data.QuadVertexBuffer.Destroy();
     s_data.CommandList.Destroy();
 
+    RendererAPI::DestroyGraphicsPipeline(s_data.GraphicsPipeline);
+
+    s_data.DefaultShaderLib.DestroyShaders();
+
     CORE_LOG_SUCCESS("Renderer2D has been shutdown");
 }
 
@@ -75,7 +89,12 @@ void Renderer2D::DrawQuad(glm::vec2 position, glm::vec2 scale)
     //Writing texture buffer
     // RendererAPI::GetContext().CommandListHandle->writeTexture();
 
-    RendererAPI::SetGraphicsState(s_data.CommandList, s_data.QuadVertexBuffer, s_data.QuadIndexBuffer);
+    RendererAPI::SetGraphicsState(
+        s_data.CommandList,
+        s_data.GraphicsPipeline,
+        s_data.QuadVertexBuffer,
+        s_data.QuadIndexBuffer
+    );
 
     auto drawArguments = nvrhi::DrawArguments()
         .setStartIndexLocation(0)

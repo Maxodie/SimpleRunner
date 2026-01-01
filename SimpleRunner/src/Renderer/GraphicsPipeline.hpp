@@ -1,5 +1,6 @@
 #pragma once
 #include "Renderer/VulkanStructures.hpp"
+#include "Renderer/ShaderLib.hpp"
 
 namespace SR
 {
@@ -7,7 +8,7 @@ namespace SR
 class GraphicsPipeline
 {
 public:
-    bool Create(RendererContext& context, const nvrhi::FramebufferInfo& info);
+    bool Create(RendererContext& context, const ShaderLib& shaderLib, const nvrhi::FramebufferInfo& info);
     void Destroy(RendererContext& context);
 
     SR_INLINE GraphicsPipelineData& GetData()

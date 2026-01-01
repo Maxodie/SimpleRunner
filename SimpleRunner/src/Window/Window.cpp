@@ -43,7 +43,23 @@ void Window::Create()
         [](GLFWwindow* window)
         {
             Data* data = static_cast<Data*>(glfwGetWindowUserPointer(window));
+            CORE_ASSERT(data, "fail to retreive the glfw window user data");
+
             WindowClosedEvent windowClosedEvent{*data};
+            data->callback(windowClosedEvent);
+        }
+    );
+
+    glfwSetWindowSizeCallback(
+        static_cast<GLFWwindow*>(m_native),
+        [](GLFWwindow* window, int width, int height)
+        {
+            Data* data = static_cast<Data*>(glfwGetWindowUserPointer(window));
+            CORE_ASSERT(data, "fail to retreive the glfw window user data");
+
+            data->Width = width;
+            data->Height = height;
+            WindowResizeEvent windowClosedEvent{*data};
             data->callback(windowClosedEvent);
         }
     );

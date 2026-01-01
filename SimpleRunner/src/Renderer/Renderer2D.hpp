@@ -13,6 +13,8 @@ public:
         VertexBuffer QuadVertexBuffer;
         IndexBuffer QuadIndexBuffer;
         CommandList CommandList;
+        GraphicsPipeline GraphicsPipeline;
+        ShaderLib DefaultShaderLib;
 
         static constexpr uint32_t Indices[] =
             {

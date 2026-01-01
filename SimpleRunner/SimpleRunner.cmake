@@ -33,8 +33,13 @@ add_library(SimpleRunner
         SimpleRunner/src/Renderer/Texture.hpp
         SimpleRunner/src/Renderer/Texture.cpp
         SimpleRunner/src/Renderer/Vertex.hpp
+        SimpleRunner/src/Renderer/ShaderLib.hpp
+        SimpleRunner/src/Renderer/ShaderLib.cpp
         SimpleRunner/src/Renderer/Renderer2D.hpp
         SimpleRunner/src/Renderer/Renderer2D.cpp
+
+        SimpleRunner/src/Utils/FileSystem.hpp
+        SimpleRunner/src/Utils/FileSystem.cpp
 )
 
 target_link_libraries(SimpleRunner PUBLIC

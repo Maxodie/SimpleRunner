@@ -17,6 +17,7 @@ public:
 
     void OnEvent(Event& event);
     bool OnWindowClosedEvent(const WindowClosedEvent& window);
+    bool OnWindowResizedEvent(const WindowResizeEvent& window);
 
     SR_INLINE static Application& GetApp()
     {

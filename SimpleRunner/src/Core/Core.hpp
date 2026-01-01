@@ -1,5 +1,6 @@
 #pragma once
 #include <limits>
+#include <regex>
 #include <algorithm>
 #include <cstdint>
 #include <functional>
@@ -20,6 +21,7 @@
 #include <assert.h>
 #include <cstddef>
 #include <iomanip>
+#include <fstream>
 #include <iostream>
 
 #include "Log/Log.hpp"

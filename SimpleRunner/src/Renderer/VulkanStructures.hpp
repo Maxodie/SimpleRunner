@@ -10,8 +10,6 @@ namespace SR
 
     struct GraphicsPipelineData
     {
-        nvrhi::ShaderHandle VertexShader;
-        nvrhi::ShaderHandle FragmentShader;
         nvrhi::InputLayoutHandle InputLayoutHandle;
         nvrhi::GraphicsPipelineHandle GraphicsPipeline;
     };

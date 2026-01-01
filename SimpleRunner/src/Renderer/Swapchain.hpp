@@ -28,10 +28,15 @@ public:
         return m_data;
     }
 
-    SR_INLINE void Resize(RendererContext& context)
+    SR_INLINE void Resize(RendererContext& context, uint32_t width, uint32_t height)
     {
+        context.Device.waitIdle();
+        m_data.Width = width;
+        m_data.Height = height;
+        DestroyFramebuffers(context);
         Destroy(context);
         Create(context);
+        CreateFramebuffers(context);
     }
 
 private:
